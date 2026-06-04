@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ static_url('css/login.css') }}">
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1>XHAgentOS</h1>
+                    <p>智能数据瞭望与问数系统 · 管理后台</p>
+                </div>
+                <form class="login-form" method="post" action="/auth/login" id="loginForm">
+                    {% module xsrf_form_html() %}
+                    {% if error %}
+                    <div class="error-msg show">{{ error }}</div>
+                    {% end %}
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="username" name="username" placeholder="请输入用户名" value="admin" autocomplete="username">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">密码</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="password" name="password" placeholder="请输入密码" value="admin123" autocomplete="current-password">
+                        </div>
+                    </div>
+                    <button type="submit" class="login-btn">登 录</button>
+                </form>
+                <div class="login-footer">
+                    <p>XHAgentOS v1.0 · 企业级智能数据平台</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

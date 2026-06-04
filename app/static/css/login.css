@@ -1,0 +1,187 @@
+/* 登录页 - 沉浸式企业风格 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.login-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    overflow: hidden;
+}
+
+/* 背景装饰圆 */
+.login-wrapper::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(83, 127, 231, 0.15) 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+}
+
+.login-wrapper::after {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(83, 231, 183, 0.1) 0%, transparent 70%);
+    bottom: -100px;
+    left: -100px;
+}
+
+.login-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 40px 36px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.login-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.login-header p {
+    font-size: 14px;
+    color: #8c8c8c;
+}
+
+.login-form .form-group {
+    margin-bottom: 20px;
+}
+
+.login-form .form-group label {
+    display: block;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.login-form .form-group .input-wrapper {
+    position: relative;
+}
+
+.login-form .form-group .input-wrapper .icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #bfbfbf;
+    font-size: 16px;
+    pointer-events: none;
+}
+
+.login-form .form-group input {
+    width: 100%;
+    height: 44px;
+    padding: 0 12px 0 38px;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+    background: #fafafa;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.login-form .form-group input:focus {
+    border-color: #3b7cff;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(59, 124, 255, 0.1);
+}
+
+.login-form .form-group input::placeholder {
+    color: #bfbfbf;
+}
+
+.login-form .error-msg {
+    color: #ff4d4f;
+    font-size: 13px;
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: #fff2f0;
+    border: 1px solid #ffccc7;
+    border-radius: 6px;
+    display: none;
+}
+
+.login-form .error-msg.show {
+    display: block;
+}
+
+.login-form .login-btn {
+    width: 100%;
+    height: 44px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    background: linear-gradient(135deg, #3b7cff 0%, #1a5cdb 100%);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+}
+
+.login-form .login-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1a4fb5 100%);
+    box-shadow: 0 4px 15px rgba(59, 124, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+.login-form .login-btn:active {
+    transform: translateY(0);
+}
+
+.login-footer {
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.login-footer p {
+    font-size: 12px;
+    color: #bfbfbf;
+}
+
+/* 响应式适配 */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 32px 24px;
+    }
+    .login-header h1 {
+        font-size: 20px;
+    }
+}
