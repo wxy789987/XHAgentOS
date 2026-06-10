@@ -24,3 +24,39 @@ def init_db():
                 create_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
         ''')
+        # 数据库迁移：为已有 users 表添加 role_id 列（若不存在）
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN role_id INTEGER DEFAULT 1")
+        except sqlite3.OperationalError:
+            pass  # 列已存在则忽略
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS features (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                code TEXT NOT NULL UNIQUE,
+                icon TEXT DEFAULT '',
+                parent_id INTEGER DEFAULT 0,
+                url TEXT DEFAULT '',
+                sort INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1,
+                create_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS roles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                code TEXT NOT NULL UNIQUE,
+                description TEXT DEFAULT '',
+                is_system INTEGER DEFAULT 0,
+                create_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS role_permissions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                role_id INTEGER NOT NULL,
+                feature_id INTEGER NOT NULL,
+                UNIQUE(role_id, feature_id)
+            )
+        ''')

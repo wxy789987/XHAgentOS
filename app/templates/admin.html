@@ -20,57 +20,48 @@
 
         <!-- 左侧菜单 -->
         <div class="layui-side layui-bg-black">
-            <div class="layui-side-scroll">
-                <ul class="layui-nav layui-nav-tree">
-                    <li class="layui-nav-item">
-                        <a href="/admin/user" target="workspace">
-                            <i class="layui-icon layui-icon-user"></i> 用户管理
-                        </a>
-                    </li>
-                    <li class="layui-nav-item">
-                        <a href="javascript:;" target="workspace">
-                            <i class="layui-icon layui-icon-set"></i> 功能管理
-                        </a>
-                    </li>
-                    <li class="layui-nav-item">
-                        <a href="javascript:;" target="workspace">
-                            <i class="layui-icon layui-icon-auz"></i> 角色管理
-                        </a>
-                    </li>
-                    <li class="layui-nav-item">
-                        <a href="javascript:;" target="workspace">
-                            <i class="layui-icon layui-icon-password"></i> 权限管理
-                        </a>
-                    </li>
-                    <li class="layui-nav-item">
-                        <a href="javascript:;" target="workspace">
-                            <i class="layui-icon layui-icon-engine"></i> 模型引擎
-                        </a>
-                    </li>
-                    <li class="layui-nav-item">
-                        <a href="javascript:;" target="workspace">
-                            <i class="layui-icon layui-icon-app"></i> 数据仓库
-                        </a>
-                    </li>
-                    <li class="layui-nav-item">
-                        <a href="javascript:;" target="workspace">
-                            <i class="layui-icon layui-icon-set"></i> 系统设置
-                        </a>
-                    </li>
-                </ul>
+            <div class="layui-side-scroll" id="sideMenu">
+                <ul class="layui-nav layui-nav-tree" id="navMenu"></ul>
             </div>
         </div>
 
         <!-- 右侧工作区 -->
         <div class="layui-body">
-            <iframe name="workspace" src="/admin/user" frameborder="0"></iframe>
+            <iframe name="workspace" src="/admin/user" frameborder="0" id="workspace"></iframe>
         </div>
     </div>
 
     <script src="{{ static_url('dist/layui/layui.js') }}"></script>
     <script>
-        layui.use('element', function(){
+        layui.use(['element', 'jquery'], function(){
             var element = layui.element;
+            var $ = layui.jquery;
+
+            // 动态加载菜单
+            $.getJSON('/admin/feature/menu', function(menus){
+                var html = '';
+                $.each(menus, function(i, item){
+                    // 跳过没有子菜单且没有URL的无效菜单项（避免iframe嵌套加载）
+                    if((!item.children || item.children.length === 0) && (!item.url || item.url === '')){
+                        return;
+                    }
+                    if(item.children && item.children.length > 0){
+                        html += '<li class="layui-nav-item layui-nav-itemed">';
+                        html += '<a href="javascript:;"><i class="layui-icon ' + item.icon + '"></i> ' + item.name + '</a>';
+                        html += '<dl class="layui-nav-child">';
+                        $.each(item.children, function(j, child){
+                            html += '<dd><a href="' + child.url + '" target="workspace"><i class="layui-icon ' + child.icon + '"></i> ' + child.name + '</a></dd>';
+                        });
+                        html += '</dl></li>';
+                    } else {
+                        html += '<li class="layui-nav-item">';
+                        html += '<a href="' + item.url + '" target="workspace"><i class="layui-icon ' + item.icon + '"></i> ' + item.name + '</a>';
+                        html += '</li>';
+                    }
+                });
+                $('#navMenu').html(html);
+                element.render('nav');
+            });
         });
     </script>
 </body>

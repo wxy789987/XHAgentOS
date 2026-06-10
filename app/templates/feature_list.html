@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ static_url('dist/layui/css/layui.css') }}">
+</head>
+<body>
+    <div style="padding:15px;">
+        <div style="margin-bottom:15px;">
+            <button class="layui-btn layui-btn-sm" id="btnAdd">
+                <i class="layui-icon layui-icon-add-1"></i> 新增功能
+            </button>
+        </div>
+        <table id="featureTable" lay-filter="featureTable"></table>
+    </div>
+
+    <script src="{{ static_url('dist/layui/layui.js') }}"></script>
+    <script>
+        function getXsrfToken() {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var c = cookies[i].trim();
+                if (c.indexOf('_xsrf=') === 0) return c.substring(6);
+            }
+            return '';
+        }
+
+        layui.use(['table', 'layer', 'form'], function(){
+            var table = layui.table;
+            var layer = layui.layer;
+            var form = layui.form;
+            var $ = layui.jquery;
+
+            // 渲染功能树表
+            table.render({
+                elem: '#featureTable',
+                url: '/admin/feature/tree',
+                page: false,
+                cols: [[
+                    {type: 'numbers', title: '序号', width: 80, align: 'center'},
+                    {field: 'name', title: '功能名称', width: 200, align: 'left'},
+                    {field: 'code', title: '编码', width: 150, align: 'center'},
+                    {field: 'url', title: 'URL', width: 200, align: 'center'},
+                    {field: 'sort', title: '排序', width: 80, align: 'center'},
+                    {field: 'is_active', title: '状态', width: 100, align: 'center', templet: function(d){
+                        return d.is_active == 1 ? '<span style="color:#5FB878;">启用</span>' : '<span style="color:#FF5722;">禁用</span>';
+                    }},
+                    {title: '操作', width: 200, align: 'center', toolbar: '#toolbar'}
+                ]],
+                parseData: function(res){
+                    var data = [];
+                    $.each(res, function(i, item){
+                        data.push({
+                            id: item.id, name: item.name, code: item.code,
+                            icon: item.icon, url: item.url, sort: item.sort,
+                            is_active: item.is_active, _level: 0
+                        });
+                        $.each(item.children, function(j, child){
+                            data.push({
+                                id: child.id, name: '&nbsp;&nbsp;&nbsp;├ ' + child.name, code: child.code,
+                                icon: child.icon, url: child.url, sort: child.sort,
+                                is_active: child.is_active, _level: 1
+                            });
+                        });
+                    });
+                    return {code: 0, msg: '', count: data.length, data: data};
+                }
+            });
+
+            // 操作栏
+            table.on('tool(featureTable)', function(obj){
+                var data = obj.data;
+                if(obj.event === 'edit'){
+                    layer.open({
+                        type: 1, title: '编辑功能', area: ['500px', '400px'],
+                        content: $('#editFormHtml').html(),
+                        success: function(layero){
+                            $('input[name="id"]', layero).val(data.id);
+                            $('input[name="name"]', layero).val(data.name.replace(/[^\\u4e00-\\u9fa5\\w]/g,''));
+                            $('input[name="code"]', layero).val(data.code);
+                            $('input[name="icon"]', layero).val(data.icon);
+                            $('input[name="url"]', layero).val(data.url);
+                            $('input[name="sort"]', layero).val(data.sort);
+                            if(data.is_active == 1) $('input[name="is_active"][value="1"]', layero).prop('checked',true);
+                            else $('input[name="is_active"][value="0"]', layero).prop('checked',true);
+                            form.render(null, 'editForm');
+                            form.on('submit(editSubmit)', function(fd){
+                                fd.field._xsrf = getXsrfToken();
+                                $.post('/admin/feature/edit', fd.field, function(res){
+                                    if(res.code === 0){ layer.msg('更新成功',{icon:1}); layer.closeAll(); table.reload('featureTable'); }
+                                    else layer.msg(res.msg,{icon:2});
+                                },'json');
+                                return false;
+                            });
+                        }
+                    });
+                } else if(obj.event === 'del'){
+                    layer.confirm('确定删除功能「' + data.name.replace(/[^\\u4e00-\\u9fa5\\w]/g,'') + '」及其子功能？', function(idx){
+                        $.post('/admin/feature/delete', {id: data.id, _xsrf: getXsrfToken()}, function(res){
+                            if(res.code === 0){ layer.msg('删除成功',{icon:1}); table.reload('featureTable'); }
+                            else layer.msg(res.msg,{icon:2});
+                        },'json');
+                        layer.close(idx);
+                    });
+                }
+            });
+
+            // 新增
+            $('#btnAdd').on('click', function(){
+                layer.open({
+                    type: 1, title: '新增功能', area: ['500px', '400px'],
+                    content: $('#addFormHtml').html(),
+                    success: function(layero){
+                        form.render(null, 'addForm');
+                        form.on('submit(addSubmit)', function(fd){
+                            fd.field._xsrf = getXsrfToken();
+                            $.post('/admin/feature/add', fd.field, function(res){
+                                if(res.code === 0){ layer.msg('新增成功',{icon:1}); layer.closeAll(); table.reload('featureTable'); }
+                                else layer.msg(res.msg,{icon:2});
+                            },'json');
+                            return false;
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- 新增表单模板 -->
+    <script type="text/html" id="addFormHtml">
+        <form class="layui-form" style="padding:20px;" lay-filter="addForm">
+            <div class="layui-form-item"><label class="layui-form-label">名称</label>
+                <div class="layui-input-block"><input type="text" name="name" required class="layui-input" placeholder="如：用户管理"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">编码</label>
+                <div class="layui-input-block"><input type="text" name="code" required class="layui-input" placeholder="如：user_mgr"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">图标</label>
+                <div class="layui-input-block"><input type="text" name="icon" class="layui-input" placeholder="layui-icon-user"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">父级ID</label>
+                <div class="layui-input-block"><input type="number" name="parent_id" class="layui-input" value="0" placeholder="0为一级菜单"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">URL</label>
+                <div class="layui-input-block"><input type="text" name="url" class="layui-input" placeholder="/admin/user"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">排序</label>
+                <div class="layui-input-block"><input type="number" name="sort" class="layui-input" value="0"></div></div>
+            <div class="layui-form-item"><div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="addSubmit">提交</button>
+                <button type="button" class="layui-btn layui-btn-primary" onclick="layer.closeAll()">取消</button>
+            </div></div>
+        </form>
+    </script>
+
+    <!-- 编辑表单模板 -->
+    <script type="text/html" id="editFormHtml">
+        <form class="layui-form" style="padding:20px;" lay-filter="editForm">
+            <input type="hidden" name="id">
+            <div class="layui-form-item"><label class="layui-form-label">名称</label>
+                <div class="layui-input-block"><input type="text" name="name" required class="layui-input"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">编码</label>
+                <div class="layui-input-block"><input type="text" name="code" class="layui-input" readonly style="background:#f5f5f5;"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">图标</label>
+                <div class="layui-input-block"><input type="text" name="icon" class="layui-input"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">父级ID</label>
+                <div class="layui-input-block"><input type="number" name="parent_id" class="layui-input" value="0"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">URL</label>
+                <div class="layui-input-block"><input type="text" name="url" class="layui-input"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">排序</label>
+                <div class="layui-input-block"><input type="number" name="sort" class="layui-input" value="0"></div></div>
+            <div class="layui-form-item"><label class="layui-form-label">状态</label>
+                <div class="layui-input-block">
+                    <input type="radio" name="is_active" value="1" title="启用" checked>
+                    <input type="radio" name="is_active" value="0" title="禁用">
+                </div></div>
+            <div class="layui-form-item"><div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="editSubmit">保存</button>
+                <button type="button" class="layui-btn layui-btn-primary" onclick="layer.closeAll()">取消</button>
+            </div></div>
+        </form>
+    </script>
+
+    <script type="text/html" id="toolbar">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+    </script>
+</body>
+</html>

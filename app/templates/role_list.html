@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ static_url('dist/layui/css/layui.css') }}">
+</head>
+<body>
+    <div style="padding:15px;">
+        <div style="margin-bottom:15px;">
+            <button class="layui-btn layui-btn-sm" id="btnAdd">
+                <i class="layui-icon layui-icon-add-1"></i> 新增角色
+            </button>
+        </div>
+        <table id="roleTable" lay-filter="roleTable"></table>
+    </div>
+
+    <script src="{{ static_url('dist/layui/layui.js') }}"></script>
+    <script>
+        function getXsrfToken() {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var c = cookies[i].trim();
+                if (c.indexOf('_xsrf=') === 0) return c.substring(6);
+            }
+            return '';
+        }
+
+        layui.use(['table', 'layer', 'form'], function(){
+            var table = layui.table;
+            var layer = layui.layer;
+            var form = layui.form;
+            var $ = layui.jquery;
+
+            table.render({
+                elem: '#roleTable',
+                url: '/admin/role/list',
+                page: false,
+                cols: [[
+                    {type: 'numbers', title: '序号', width: 80, align: 'center'},
+                    {field: 'name', title: '角色名称', width: 150, align: 'center'},
+                    {field: 'code', title: '编码', width: 120, align: 'center'},
+                    {field: 'description', title: '描述', width: 250, align: 'center'},
+                    {field: 'user_count', title: '用户数', width: 100, align: 'center'},
+                    {field: 'is_system', title: '系统内置', width: 100, align: 'center', templet: function(d){
+                        return d.is_system == 1 ? '<span style="color:#FFB800;">是</span>' : '<span style="color:#5FB878;">否</span>';
+                    }},
+                    {field: 'create_at', title: '创建时间', width: 180, align: 'center'},
+                    {title: '操作', width: 200, align: 'center', toolbar: '#toolbar'}
+                ]],
+                parseData: function(res){ return res; }
+            });
+
+            table.on('tool(roleTable)', function(obj){
+                var data = obj.data;
+                if(obj.event === 'edit'){
+                    if(data.is_system == 1){
+                        layer.msg('系统角色不可修改名称', {icon: 2});
+                        return;
+                    }
+                    layer.open({
+                        type: 1, title: '编辑角色', area: ['450px', '300px'],
+                        content: '<form class="layui-form" style="padding:25px 20px 0;" lay-filter="editForm">' +
+                            '<input type="hidden" name="id" value="' + data.id + '">' +
+                            '<div class="layui-form-item"><label class="layui-form-label">名称</label><div class="layui-input-block"><input type="text" name="name" required class="layui-input" value="' + data.name + '"></div></div>' +
+                            '<div class="layui-form-item"><label class="layui-form-label">描述</label><div class="layui-input-block"><input type="text" name="description" class="layui-input" value="' + (data.description||'') + '"></div></div>' +
+                            '<div class="layui-form-item" style="text-align:center;"><button class="layui-btn" lay-submit lay-filter="editSubmit">保存</button><button type="button" class="layui-btn layui-btn-primary" onclick="layer.closeAll()">取消</button></div></form>',
+                        success: function(layero){
+                            form.render(null, 'editForm');
+                            form.on('submit(editSubmit)', function(fd){
+                                fd.field._xsrf = getXsrfToken();
+                                $.post('/admin/role/edit', fd.field, function(res){
+                                    if(res.code === 0){ layer.msg('更新成功',{icon:1}); layer.closeAll(); table.reload('roleTable'); }
+                                    else layer.msg(res.msg,{icon:2});
+                                },'json');
+                                return false;
+                            });
+                        }
+                    });
+                } else if(obj.event === 'del'){
+                    if(data.is_system == 1){
+                        layer.msg('系统角色不能删除', {icon: 2});
+                        return;
+                    }
+                    layer.confirm('确定删除角色「' + data.name + '」？', function(idx){
+                        $.post('/admin/role/delete', {id: data.id, _xsrf: getXsrfToken()}, function(res){
+                            if(res.code === 0){ layer.msg('删除成功',{icon:1}); table.reload('roleTable'); }
+                            else layer.msg(res.msg,{icon:2});
+                        },'json');
+                        layer.close(idx);
+                    });
+                }
+            });
+
+            $('#btnAdd').on('click', function(){
+                layer.open({
+                    type: 1, title: '新增角色', area: ['450px', '320px'],
+                    content: '<form class="layui-form" style="padding:25px 20px 0;" lay-filter="addForm">' +
+                        '<div class="layui-form-item"><label class="layui-form-label">名称</label><div class="layui-input-block"><input type="text" name="name" required class="layui-input" placeholder="如：编辑"></div></div>' +
+                        '<div class="layui-form-item"><label class="layui-form-label">编码</label><div class="layui-input-block"><input type="text" name="code" required class="layui-input" placeholder="如：editor"></div></div>' +
+                        '<div class="layui-form-item"><label class="layui-form-label">描述</label><div class="layui-input-block"><input type="text" name="description" class="layui-input" placeholder="角色描述"></div></div>' +
+                        '<div class="layui-form-item" style="text-align:center;"><button class="layui-btn" lay-submit lay-filter="addSubmit">提交</button><button type="button" class="layui-btn layui-btn-primary" onclick="layer.closeAll()">取消</button></div></form>',
+                    success: function(layero){
+                        form.render(null, 'addForm');
+                        form.on('submit(addSubmit)', function(fd){
+                            fd.field._xsrf = getXsrfToken();
+                            $.post('/admin/role/add', fd.field, function(res){
+                                if(res.code === 0){ layer.msg('新增成功',{icon:1}); layer.closeAll(); table.reload('roleTable'); }
+                                else layer.msg(res.msg,{icon:2});
+                            },'json');
+                            return false;
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+    <script type="text/html" id="toolbar">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+    </script>
+</body>
+</html>
