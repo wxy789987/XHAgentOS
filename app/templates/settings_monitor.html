@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ static_url('dist/layui/css/layui.css') }}">
+    <link rel="stylesheet" href="{{ static_url('css/admin.css') }}">
+    <style>
+        .stat-card { text-align:center; padding:5px 0; }
+        .stat-number { font-size:36px; font-weight:bold; margin-bottom:5px; }
+        .stat-label { color:#888; font-size:13px; }
+    </style>
+</head>
+<body style="background:#f2f2f2;">
+<div class="main-container">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <h3>性能监控</h3>
+            <div class="layui-btn-group pull-right">
+                <button class="layui-btn layui-btn-sm" onclick="location.reload()"><i class="layui-icon layui-icon-refresh"></i> 刷新</button>
+            </div>
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-row layui-col-space20">
+                <div class="layui-col-md4">
+                    <div class="layui-card"><div class="layui-card-header">CPU 使用率</div><div class="layui-card-body">
+                        <div class="stat-card"><div class="stat-number" style="color:#1E9FFF;">{{ monitor["cpu"]["percent"] }}%</div><div class="stat-label">核心数: {{ monitor["cpu"]["cores"] }} 核</div></div>
+                    </div></div>
+                </div>
+                <div class="layui-col-md4">
+                    <div class="layui-card"><div class="layui-card-header">内存使用率</div><div class="layui-card-body">
+                        <div class="stat-card"><div class="stat-number" style="color:#5FB878;">{{ monitor["memory"]["percent"] }}%</div><div class="stat-label">已用 {{ monitor["memory"]["used"] }} GB / 总计 {{ monitor["memory"]["total"] }} GB</div></div>
+                    </div></div>
+                </div>
+                <div class="layui-col-md4">
+                    <div class="layui-card"><div class="layui-card-header">磁盘使用率</div><div class="layui-card-body">
+                        <div class="stat-card"><div class="stat-number" style="color:#FFB800;">{{ monitor["disk"]["percent"] }}%</div><div class="stat-label">已用 {{ monitor["disk"]["used"] }} GB / 总计 {{ monitor["disk"]["total"] }} GB</div></div>
+                    </div></div>
+                </div>
+                <div class="layui-col-md6">
+                    <div class="layui-card"><div class="layui-card-header">进程信息</div><div class="layui-card-body">
+                        <table class="layui-table"><tbody>
+                            <tr><td>进程ID</td><td>{{ monitor["process"]["pid"] }}</td></tr>
+                            <tr><td>内存占用</td><td>{{ monitor["process"]["memory"] }} MB</td></tr>
+                            <tr><td>CPU占用</td><td>{{ monitor["process"]["cpu"] }}%</td></tr>
+                            <tr><td>系统启动时间</td><td>{{ monitor["process"]["uptime"] }}</td></tr>
+                        </tbody></table>
+                    </div></div>
+                </div>
+                <div class="layui-col-md6">
+                    <div class="layui-card"><div class="layui-card-header">网络统计</div><div class="layui-card-body">
+                        <table class="layui-table"><tbody>
+                            <tr><td>发送流量</td><td>{{ monitor["network"]["bytes_sent"] }} MB</td></tr>
+                            <tr><td>接收流量</td><td>{{ monitor["network"]["bytes_recv"] }} MB</td></tr>
+                            <tr><td>发送数据包</td><td>{{ monitor["network"]["packets_sent"] }}</td></tr>
+                            <tr><td>接收数据包</td><td>{{ monitor["network"]["packets_recv"] }}</td></tr>
+                        </tbody></table>
+                    </div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

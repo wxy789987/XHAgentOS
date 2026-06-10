@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ static_url('dist/layui/css/layui.css') }}">
+    <style>
+        /* ===== 科技感全局样式 ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #0a0e1a;
+            color: #c8d6e5;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0e1a; }
+        ::-webkit-scrollbar-thumb { background: #2d3a6e; border-radius: 3px; }
+
+        /* 页面头 */
+        .page-header {
+            padding: 24px 30px 10px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 255, 255, .1);
+        }
+        .page-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d2ff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 210, 255, .3);
+        }
+        .page-header .actions { display: flex; gap: 12px; align-items: center; }
+
+        /* 科技感按钮 */
+        .btn-neon {
+            padding: 8px 22px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
+        }
+        .btn-neon.primary {
+            background: linear-gradient(135deg, #00d2ff, #3b82f6);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 210, 255, .3);
+        }
+        .btn-neon.primary:hover {
+            box-shadow: 0 0 30px rgba(0, 210, 255, .5);
+            transform: translateY(-2px);
+        }
+        .btn-neon.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(239, 68, 68, .3);
+        }
+        .btn-neon.danger:hover {
+            box-shadow: 0 0 30px rgba(239, 68, 68, .5);
+            transform: translateY(-2px);
+        }
+        .btn-neon.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(16, 185, 129, .3);
+        }
+        .btn-neon.success:hover {
+            box-shadow: 0 0 30px rgba(16, 185, 129, .5);
+            transform: translateY(-2px);
+        }
+        .btn-neon.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(245, 158, 11, .3);
+        }
+        .btn-neon.warning:hover {
+            box-shadow: 0 0 30px rgba(245, 158, 11, .5);
+            transform: translateY(-2px);
+        }
+        .btn-neon.secondary {
+            background: rgba(45, 58, 110, .6);
+            color: #00d2ff;
+            border: 1px solid rgba(0, 210, 255, .3);
+        }
+        .btn-neon.secondary:hover {
+            background: rgba(45, 58, 110, .9);
+            border-color: #00d2ff;
+        }
+        .btn-neon:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .btn-neon-sm {
+            padding: 5px 14px;
+            font-size: 12px;
+        }
+
+        /* 卡片网格 */
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 24px 30px;
+        }
+
+        /* 模型卡片 */
+        .model-card {
+            background: linear-gradient(145deg, rgba(20, 28, 58, .9), rgba(10, 14, 26, .9));
+            border: 1px solid rgba(0, 210, 255, .15);
+            border-radius: 14px;
+            padding: 22px;
+            transition: all .4s;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        .model-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(0, 210, 255, .05), transparent 60%);
+            pointer-events: none;
+        }
+        .model-card:hover {
+            border-color: rgba(0, 210, 255, .4);
+            box-shadow: 0 0 30px rgba(0, 210, 255, .1), inset 0 0 30px rgba(0, 210, 255, .03);
+            transform: translateY(-4px);
+        }
+        .model-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+        .model-card .model-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+        .model-card .model-name .badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .badge-default {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(245, 158, 11, .4);
+        }
+        .badge-active {
+            background: rgba(16, 185, 129, .2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, .3);
+        }
+        .badge-inactive {
+            background: rgba(239, 68, 68, .2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, .3);
+        }
+        .model-card .model-desc {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        .model-card .model-desc .label {
+            color: #64748b;
+            display: inline-block;
+            width: 60px;
+        }
+        .model-card .model-desc .value {
+            color: #c8d6e5;
+            word-break: break-all;
+        }
+        .model-card .model-desc .value.url-text {
+            font-size: 11px;
+            color: #00d2ff;
+        }
+        .model-card .card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(0, 210, 255, .08);
+        }
+        .model-card .card-check {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 5;
+        }
+        .model-card .card-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #00d2ff;
+            cursor: pointer;
+        }
+        .model-card .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-dot.on { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .status-dot.off { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+        /* 空状态 */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: #475569;
+        }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-state p { font-size: 16px; }
+
+        /* 分页 */
+        .pagination-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 20px 30px 30px;
+        }
+        .pagination-bar .page-btn {
+            padding: 6px 14px;
+            border: 1px solid rgba(0, 210, 255, .2);
+            border-radius: 6px;
+            background: rgba(20, 28, 58, .6);
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all .3s;
+            font-size: 13px;
+        }
+        .pagination-bar .page-btn:hover:not(.active):not(:disabled) {
+            border-color: #00d2ff;
+            color: #00d2ff;
+        }
+        .pagination-bar .page-btn.active {
+            background: linear-gradient(135deg, #00d2ff, #3b82f6);
+            color: #fff;
+            border-color: transparent;
+        }
+        .pagination-bar .page-btn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+        .pagination-bar .page-info {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0 8px;
+        }
+
+        /* 模态框 - 科技感 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, .7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: linear-gradient(145deg, #141c3a, #0a0e1a);
+            border: 1px solid rgba(0, 210, 255, .2);
+            border-radius: 16px;
+            width: 520px;
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 0 60px rgba(0, 210, 255, .1);
+            animation: modalIn .3s ease;
+        }
+        .modal-box.wide { width: 700px; }
+        .modal-box.chat-modal { width: 640px; }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-header {
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 210, 255, .1);
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            color: #e2e8f0;
+            background: linear-gradient(135deg, #00d2ff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .modal-close {
+            width: 32px; height: 32px;
+            border: none; background: rgba(255,255,255,.05);
+            border-radius: 50%;
+            color: #94a3b8;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-close:hover { background: rgba(239,68,68,.2); color: #ef4444; }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 16px 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid rgba(0, 210, 255, .1);
+        }
+
+        /* 表单 */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .form-group .input-neon {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(10, 14, 26, .8);
+            border: 1px solid rgba(0, 210, 255, .15);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+            transition: all .3s;
+            outline: none;
+        }
+        .form-group .input-neon:focus {
+            border-color: #00d2ff;
+            box-shadow: 0 0 15px rgba(0, 210, 255, .15);
+        }
+        .form-group .input-neon::placeholder { color: #475569; }
+        .form-group .input-neon-sm {
+            padding: 7px 12px;
+            font-size: 13px;
+            width: 120px;
+        }
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+        .form-row .form-group { flex: 1; }
+
+        /* 切换开关 */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(45, 58, 110, .6);
+            border-radius: 24px;
+            transition: .3s;
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background: #94a3b8;
+            border-radius: 50%;
+            transition: .3s;
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #00d2ff, #3b82f6);
+        }
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(20px);
+            background: #fff;
+        }
+
+        /* 对话测试区 */
+        .chat-area {
+            height: 360px;
+            overflow-y: auto;
+            padding: 12px;
+            background: rgba(10, 14, 26, .6);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 210, 255, .1);
+            margin-bottom: 14px;
+        }
+        .chat-msg {
+            margin-bottom: 12px;
+            display: flex;
+        }
+        .chat-msg.user { justify-content: flex-end; }
+        .chat-msg .bubble {
+            max-width: 80%;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .chat-msg.user .bubble {
+            background: linear-gradient(135deg, #00d2ff, #3b82f6);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-msg.assistant .bubble {
+            background: rgba(45, 58, 110, .5);
+            color: #c8d6e5;
+            border: 1px solid rgba(0, 210, 255, .1);
+            border-bottom-left-radius: 4px;
+        }
+        .chat-msg .bubble .usage-info {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255,255,255,.1);
+        }
+        .chat-input-row {
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input-row textarea {
+            flex: 1;
+            padding: 10px 14px;
+            background: rgba(10, 14, 26, .8);
+            border: 1px solid rgba(0, 210, 255, .15);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+            resize: none;
+            height: 50px;
+            outline: none;
+            font-family: inherit;
+        }
+        .chat-input-row textarea:focus {
+            border-color: #00d2ff;
+            box-shadow: 0 0 15px rgba(0, 210, 255, .15);
+        }
+
+        /* Token统计 */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: rgba(10, 14, 26, .6);
+            border: 1px solid rgba(0, 210, 255, .1);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d2ff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 100px;
+            padding: 10px 0;
+        }
+        .chart-bars .bar {
+            flex: 1;
+            background: linear-gradient(to top, #00d2ff, #3b82f6);
+            border-radius: 3px 3px 0 0;
+            min-height: 2px;
+            transition: height .5s;
+            opacity: .7;
+        }
+        .chart-bars .bar:hover { opacity: 1; }
+
+        /* 选中高亮 */
+        .model-card.selected {
+            border-color: #00d2ff;
+            box-shadow: 0 0 30px rgba(0, 210, 255, .2);
+        }
+
+        /* 消息提示 */
+        .toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            z-index: 2000;
+            animation: toastIn .3s ease;
+            box-shadow: 0 0 30px rgba(0,0,0,.3);
+        }
+        .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .toast.info { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,.2);
+            border-top-color: #00d2ff;
+            border-radius: 50%;
+            animation: spin .6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Token 统计图表区 */
+        .token-chart-area {
+            margin-top: 20px;
+            background: rgba(10, 14, 26, .6);
+            border: 1px solid rgba(0, 210, 255, .1);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .token-chart-area .chart-title {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+        .chart-empty {
+            text-align: center;
+            padding: 30px 20px;
+        }
+        .chart-empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: .5;
+        }
+        .chart-empty-text {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .chart-empty-hint {
+            font-size: 12px;
+            color: #475569;
+        }
+        .chart-axis-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #475569;
+            margin-top: 2px;
+        }
+
+        /* select样式 */
+        .select-neon {
+            padding: 7px 12px;
+            background: rgba(10, 14, 26, .8);
+            border: 1px solid rgba(0, 210, 255, .15);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+        .select-neon:focus { border-color: #00d2ff; }
+
+        /* 复选框列 */
+        .batch-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 0 30px 4px;
+        }
+        .batch-bar .checkbox-all {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #94a3b8;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .batch-bar .checkbox-all input { accent-color: #00d2ff; width: 16px; height: 16px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 页面头 -->
+        <div class="page-header">
+            <h1>⚡ 模型引擎</h1>
+            <div class="actions">
+                <button class="btn-neon secondary btn-neon-sm" onclick="showTokenStats()">📊 Token统计</button>
+                <button class="btn-neon primary" onclick="showAddDialog()">+ 新增模型</button>
+            </div>
+        </div>
+
+        <!-- 批量操作栏 -->
+        <div class="batch-bar">
+            <label class="checkbox-all">
+                <input type="checkbox" id="checkAll" onchange="toggleAllCheckbox()"> 全选
+            </label>
+            <button class="btn-neon danger btn-neon-sm" onclick="batchAction('delete')">批量删除</button>
+            <button class="btn-neon success btn-neon-sm" onclick="batchAction('enable')">批量启用</button>
+            <button class="btn-neon warning btn-neon-sm" onclick="batchAction('disable')">批量禁用</button>
+        </div>
+
+        <!-- 卡片网格 -->
+        <div class="model-grid" id="modelGrid"></div>
+
+        <!-- 分页 -->
+        <div class="pagination-bar" id="paginationBar"></div>
+    </div>
+
+    <!-- 新增/编辑弹窗 -->
+    <div class="modal-overlay" id="formModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="formTitle">新增模型</h3>
+                <button class="modal-close" onclick="closeModal('formModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId" value="0">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>模型名称 *</label>
+                        <input class="input-neon" id="f_name" placeholder="如: Qwen3.5 Flash">
+                    </div>
+                    <div class="form-group">
+                        <label>模型标识 *</label>
+                        <input class="input-neon" id="f_model_name" placeholder="如: qwen3.5-flash">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>接口地址 *</label>
+                        <input class="input-neon" id="f_base_url" placeholder="https://api.openai.com/v1">
+                    </div>
+                    <div class="form-group" style="flex:0 0 160px">
+                        <label>最大Token</label>
+                        <input class="input-neon" id="f_max_tokens" value="4096" type="number">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>API Key *</label>
+                    <input class="input-neon" id="f_api_key" placeholder="sk-..." type="password">
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:0 0 120px">
+                        <label>温度</label>
+                        <input class="input-neon" id="f_temperature" value="0.7" type="number" step="0.1" min="0" max="2">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:4px">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="f_is_active" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="margin-left:10px;color:#94a3b8;font-size:13px">启用状态</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-neon secondary btn-neon-sm" onclick="closeModal('formModal')">取消</button>
+                <button class="btn-neon primary" id="formSubmitBtn" onclick="submitForm()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 对话测试弹窗 -->
+    <div class="modal-overlay" id="chatModal">
+        <div class="modal-box chat-modal">
+            <div class="modal-header">
+                <h3 id="chatTitle">💬 对话测试</h3>
+                <button class="modal-close" onclick="closeModal('chatModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="chat-area" id="chatArea">
+                    <div class="chat-msg assistant">
+                        <div class="bubble">你好！我是AI助手，请发送消息开始对话测试。</div>
+                    </div>
+                </div>
+                <div class="chat-input-row">
+                    <textarea id="chatInput" placeholder="输入消息..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg()}"></textarea>
+                    <button class="btn-neon primary" onclick="sendChatMsg()" id="chatSendBtn">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token统计弹窗 -->
+    <div class="modal-overlay" id="tokenModal">
+        <div class="modal-box wide">
+            <div class="modal-header">
+                <h3>📊 Token 使用统计</h3>
+                <button class="modal-close" onclick="closeModal('tokenModal')">✕</button>
+            </div>
+            <div class="modal-body" id="tokenStatsBody">
+                <div style="text-align:center;padding:30px">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ static_url('dist/layui/layui.js') }}"></script>
+    <script>
+    var currentPage = 1;
+    var totalPages = 1;
+    var chatModelId = 0;
+    var chatMessages = [];
+
+    // XSRF 辅助函数：从 cookie 中读取 _xsrf 并返回请求头
+    function getXsrfHeaders(){
+        var headers = new Headers();
+        var xsrfCookie = document.cookie.split('; ').find(function(row) { return row.startsWith('_xsrf='); });
+        if(xsrfCookie){
+            headers.append('X-XSRFToken', xsrfCookie.split('=')[1]);
+        }
+        return headers;
+    }
+
+    // ====== 页面加载 ======
+    document.addEventListener('DOMContentLoaded', function(){ loadModels(1); });
+
+    // ====== 加载模型列表 ======
+    function loadModels(page){
+        currentPage = page;
+        fetch('/admin/ai_model/list?page=' + page + '&page_size=6')
+            .then(r => r.json())
+            .then(data => {
+                renderCards(data.items || []);
+                renderPagination(data.total, data.page, data.page_size);
+            });
+    }
+
+    // ====== 渲染卡片 ======
+    function renderCards(items){
+        var grid = document.getElementById('modelGrid');
+        if(!items.length){
+            grid.innerHTML = '<div class="empty-state"><div class="icon">🔮</div><p>暂无模型，点击右上角「新增模型」开始添加</p></div>';
+            return;
+        }
+        var html = '';
+        items.forEach(function(m){
+            var statusClass = m.is_active ? 'on' : 'off';
+            var statusText = m.is_active ? '已启用' : '已禁用';
+            var badgeHtml = '';
+            if(m.is_default) badgeHtml += '<span class="badge badge-default">默认</span>';
+            badgeHtml += '<span class="badge ' + (m.is_active ? 'badge-active' : 'badge-inactive') + '">' + statusText + '</span>';
+            var apiKeyMask = m.api_key ? m.api_key.substring(0, 8) + '...' : '未设置';
+            html += '<div class="model-card' + (m.is_default ? ' selected' : '') + '" id="card_' + m.id + '">';
+            html += '  <div class="card-check"><input type="checkbox" value="' + m.id + '" onchange="updateBatchState()"></div>';
+            html += '  <div class="card-header">';
+            html += '    <div class="model-name">' + escapeHtml(m.name) + ' ' + badgeHtml + '</div>';
+            html += '  </div>';
+            html += '  <div class="model-desc">';
+            html += '    <div><span class="label">模型:</span> <span class="value">' + escapeHtml(m.model_name) + '</span></div>';
+            html += '    <div><span class="label">接口:</span> <span class="value url-text">' + escapeHtml(m.base_url) + '</span></div>';
+            html += '    <div><span class="label">API Key:</span> <span class="value">' + apiKeyMask + '</span></div>';
+            html += '    <div><span class="label">Token:</span> <span class="value">' + m.max_tokens + ' | 温度: ' + m.temperature + '</span></div>';
+            html += '  </div>';
+            html += '  <div class="card-actions">';
+            if(!m.is_default) html += '    <button class="btn-neon success btn-neon-sm" onclick="setDefault(' + m.id + ')">★ 设为默认</button>';
+            html += '    <button class="btn-neon primary btn-neon-sm" onclick="chatTest(' + m.id + ',\'' + escapeHtml(m.name) + '\')">💬 对话测试</button>';
+            html += '    <button class="btn-neon secondary btn-neon-sm" onclick="editModel(' + m.id + ')">✏️ 编辑</button>';
+            html += '    <button class="btn-neon danger btn-neon-sm" onclick="deleteModel(' + m.id + ')">🗑 删除</button>';
+            html += '  </div>';
+            html += '</div>';
+        });
+        grid.innerHTML = html;
+    }
+
+    // ====== 渲染分页 ======
+    function renderPagination(total, page, pageSize){
+        totalPages = Math.ceil(total / pageSize) || 1;
+        var bar = document.getElementById('paginationBar');
+        var html = '';
+        html += '<button class="page-btn" onclick="loadModels(1)" ' + (page<=1?'disabled':'') + '>首页</button>';
+        html += '<button class="page-btn" onclick="loadModels(' + (page-1) + ')" ' + (page<=1?'disabled':'') + '>‹</button>';
+        var start = Math.max(1, page-2);
+        var end = Math.min(totalPages, page+2);
+        for(var i=start; i<=end; i++){
+            html += '<button class="page-btn ' + (i===page?'active':'') + '" onclick="loadModels(' + i + ')">' + i + '</button>';
+        }
+        html += '<button class="page-btn" onclick="loadModels(' + (page+1) + ')" ' + (page>=totalPages?'disabled':'') + '>›</button>';
+        html += '<button class="page-btn" onclick="loadModels(' + totalPages + ')" ' + (page>=totalPages?'disabled':'') + '>末页</button>';
+        html += '<span class="page-info">共 ' + total + ' 条，' + page + '/' + totalPages + ' 页</span>';
+        bar.innerHTML = html;
+    }
+
+    // ====== 新增弹窗 ======
+    function showAddDialog(){
+        document.getElementById('formTitle').textContent = '✨ 新增模型';
+        document.getElementById('editId').value = '0';
+        document.getElementById('f_name').value = '';
+        document.getElementById('f_model_name').value = '';
+        document.getElementById('f_base_url').value = 'https://aigc-api.aitoolcore.com/api/v1';
+        document.getElementById('f_api_key').value = '';
+        document.getElementById('f_max_tokens').value = '4096';
+        document.getElementById('f_temperature').value = '0.7';
+        document.getElementById('f_is_active').checked = true;
+        document.getElementById('formSubmitBtn').textContent = '确认新增';
+        showModal('formModal');
+    }
+
+    // ====== 编辑模型 ======
+    function editModel(id){
+        fetch('/admin/ai_model/list?page=1&page_size=999')
+            .then(r => r.json())
+            .then(data => {
+                var model = null;
+                (data.items || []).forEach(function(m){ if(m.id == id) model = m; });
+                if(!model){ toast('模型不存在', 'error'); return; }
+                document.getElementById('formTitle').textContent = '✏️ 编辑模型';
+                document.getElementById('editId').value = model.id;
+                document.getElementById('f_name').value = model.name;
+                document.getElementById('f_model_name').value = model.model_name;
+                document.getElementById('f_base_url').value = model.base_url;
+                document.getElementById('f_api_key').value = model.api_key;
+                document.getElementById('f_max_tokens').value = model.max_tokens;
+                document.getElementById('f_temperature').value = model.temperature;
+                document.getElementById('f_is_active').checked = model.is_active == 1;
+                document.getElementById('formSubmitBtn').textContent = '保存修改';
+                showModal('formModal');
+            });
+    }
+
+    // ====== 提交表单 ======
+    function submitForm(){
+        var id = document.getElementById('editId').value;
+        var name = document.getElementById('f_name').value.trim();
+        var model_name = document.getElementById('f_model_name').value.trim();
+        var base_url = document.getElementById('f_base_url').value.trim();
+        var api_key = document.getElementById('f_api_key').value.trim();
+        var max_tokens = document.getElementById('f_max_tokens').value || 4096;
+        var temperature = document.getElementById('f_temperature').value || 0.7;
+        var is_active = document.getElementById('f_is_active').checked ? 1 : 0;
+
+        if(!name || !model_name || !base_url || !api_key){
+            toast('请填写完整信息', 'error');
+            return;
+        }
+
+        var url = id == 0 ? '/admin/ai_model/add' : '/admin/ai_model/edit';
+        var params = new URLSearchParams();
+        if(id != 0) params.append('id', id);
+        params.append('name', name);
+        params.append('model_name', model_name);
+        params.append('base_url', base_url);
+        params.append('api_key', api_key);
+        params.append('max_tokens', max_tokens);
+        params.append('temperature', temperature);
+        params.append('is_active', is_active);
+
+        fetch(url, { method: 'POST', headers: getXsrfHeaders(), body: params })
+            .then(r => r.json())
+            .then(function(res){
+                if(res.code == 0){
+                    toast(res.msg, 'success');
+                    closeModal('formModal');
+                    loadModels(currentPage);
+                } else {
+                    toast(res.msg, 'error');
+                }
+            });
+    }
+
+    // ====== 删除模型 ======
+    function deleteModel(id){
+        if(!confirm('确定删除该模型？')) return;
+        var params = new URLSearchParams();
+        params.append('id', id);
+        fetch('/admin/ai_model/delete', { method: 'POST', headers: getXsrfHeaders(), body: params })
+            .then(r => r.json())
+            .then(function(res){
+                toast(res.msg, res.code == 0 ? 'success' : 'error');
+                if(res.code == 0) loadModels(currentPage);
+            });
+    }
+
+    // ====== 设置默认 ======
+    function setDefault(id){
+        var params = new URLSearchParams();
+        params.append('id', id);
+        fetch('/admin/ai_model/set_default', { method: 'POST', headers: getXsrfHeaders(), body: params })
+            .then(r => r.json())
+            .then(function(res){
+                toast(res.msg, res.code == 0 ? 'success' : 'error');
+                if(res.code == 0) loadModels(currentPage);
+            });
+    }
+
+    // ====== 对话测试 ======
+    function chatTest(id, name){
+        chatModelId = id;
+        chatMessages = [{role: 'system', content: '你是一个智能AI助手。'}];
+        document.getElementById('chatTitle').textContent = '💬 对话测试 - ' + name;
+        document.getElementById('chatArea').innerHTML = '<div class="chat-msg assistant"><div class="bubble">你好！我是AI助手，请发送消息开始对话测试。</div></div>';
+        document.getElementById('chatInput').value = '';
+        showModal('chatModal');
+    }
+
+    function sendChatMsg(){
+        var input = document.getElementById('chatInput');
+        var text = input.value.trim();
+        if(!text) return;
+
+        chatMessages.push({role: 'user', content: text});
+        addChatMsg('user', text);
+        input.value = '';
+
+        var btn = document.getElementById('chatSendBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span>';
+
+        // 创建待回复的助手气泡
+        var area = document.getElementById('chatArea');
+        var msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-msg assistant';
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.id = 'streamingBubble';
+        bubble.textContent = '▊';
+        msgDiv.appendChild(bubble);
+        area.appendChild(msgDiv);
+        area.scrollTop = area.scrollHeight;
+
+        var params = new URLSearchParams();
+        params.append('model_id', chatModelId);
+        params.append('messages', JSON.stringify(chatMessages));
+        var headers = getXsrfHeaders();
+
+        fetch('/admin/ai_model/chat_stream', { method: 'POST', headers: headers, body: params })
+            .then(function(r){
+                if(!r.ok) throw new Error('HTTP ' + r.status);
+                var reader = r.body.getReader();
+                var decoder = new TextDecoder();
+                var buffer = '';
+                var fullReply = '';
+
+                function readStream(){
+                    reader.read().then(function(result){
+                        if(result.done){
+                            // 流结束
+                            return;
+                        }
+                        buffer += decoder.decode(result.value, {stream: true});
+                        // 按行解析 SSE
+                        var lines = buffer.split('\n');
+                        buffer = lines.pop(); // 保留未完成的行
+                        for(var i = 0; i < lines.length; i++){
+                            var line = lines[i].trim();
+                            if(line.startsWith('data: ')){
+                                var jsonStr = line.substring(6);
+                                try {
+                                    var evt = JSON.parse(jsonStr);
+                                    if(evt.type === 'chunk'){
+                                        fullReply += evt.content;
+                                        bubble.textContent = fullReply + '▊';
+                                        area.scrollTop = area.scrollHeight;
+                                    } else if(evt.type === 'done'){
+                                        // 移除光标
+                                        bubble.textContent = fullReply;
+                                        // 追加 usage 信息
+                                        if(evt.usage){
+                                            var usageDiv = document.createElement('div');
+                                            usageDiv.className = 'usage-info';
+                                            usageDiv.innerHTML = '⚡ Prompt: ' + evt.usage.prompt_tokens + ' | 回复: ' + evt.usage.completion_tokens + ' | 总计: ' + evt.usage.total_tokens + ' tokens';
+                                            bubble.appendChild(usageDiv);
+                                        }
+                                        // 记录到对话历史
+                                        chatMessages.push({role: 'assistant', content: fullReply});
+                                        btn.disabled = false;
+                                        btn.textContent = '发送';
+                                    } else if(evt.type === 'error'){
+                                        bubble.textContent = '❌ ' + (evt.msg || '未知错误');
+                                        btn.disabled = false;
+                                        btn.textContent = '发送';
+                                    }
+                                } catch(e){
+                                    // JSON 解析错误，忽略
+                                }
+                            }
+                        }
+                        readStream();
+                    }).catch(function(e){
+                        bubble.textContent = '❌ 读取流失败: ' + e.message;
+                        btn.disabled = false;
+                        btn.textContent = '发送';
+                    });
+                }
+                readStream();
+            })
+            .catch(function(e){
+                // 移除待回复气泡
+                var sb = document.getElementById('streamingBubble');
+                if(sb) { sb.textContent = '❌ 请求失败: ' + e.message; }
+                btn.disabled = false;
+                btn.textContent = '发送';
+            });
+    }
+
+    function addChatMsg(role, content){
+        var area = document.getElementById('chatArea');
+        var div = document.createElement('div');
+        div.className = 'chat-msg ' + role;
+        div.innerHTML = '<div class="bubble">' + content.replace(/\n/g, '<br>') + '</div>';
+        area.appendChild(div);
+        area.scrollTop = area.scrollHeight;
+    }
+
+    // ====== Token统计 ======
+    function showTokenStats(){
+        showModal('tokenModal');
+        document.getElementById('tokenStatsBody').innerHTML = '<div style="text-align:center;padding:30px"><span class="loading-spinner"></span> 加载中...</div>';
+
+        fetch('/admin/ai_model/token_stats')
+            .then(r => r.json())
+            .then(function(data){
+                if(data.code != 0){
+                    document.getElementById('tokenStatsBody').innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444">加载失败</div>';
+                    return;
+                }
+                var s = data.summary || {};
+                var items = data.items || [];
+                // 计算最大值，用于柱状图比例
+                var maxVal = 1;
+                items.forEach(function(d){ if(d.total_tokens > maxVal) maxVal = d.total_tokens; });
+                if(maxVal == 0) maxVal = 1;
+
+                var html = '<div class="stats-container">';
+                html += '  <div class="stat-card"><div class="stat-value">' + (s.prompt_tokens || 0) + '</div><div class="stat-label">Prompt Tokens</div></div>';
+                html += '  <div class="stat-card"><div class="stat-value">' + (s.completion_tokens || 0) + '</div><div class="stat-label">Completion Tokens</div></div>';
+                html += '  <div class="stat-card"><div class="stat-value">' + (s.total_tokens || 0) + '</div><div class="stat-label">总 Tokens</div></div>';
+                html += '</div>';
+
+                // ===== 趋势图表 =====
+                html += '<div class="token-chart-area">';
+                html += '  <div class="chart-title">📈 近30天 Token 消耗趋势</div>';
+
+                if(items.length === 0){
+                    // 无数据占位
+                    html += '  <div class="chart-empty">';
+                    html += '    <div class="chart-empty-icon">📊</div>';
+                    html += '    <div class="chart-empty-text">暂无对话数据</div>';
+                    html += '    <div class="chart-empty-hint">快去测试模型对话吧，Token 消耗数据将在这里展示</div>';
+                    html += '  </div>';
+                } else {
+                    // 柱状图
+                    var reversed = items.slice().reverse();
+                    html += '  <div class="chart-bars">';
+                    reversed.forEach(function(d){
+                        var pct = Math.max((d.total_tokens / maxVal * 100) || 0, 2);
+                        html += '<div class="bar" style="height:' + pct + '%" title="' + (d.date||'') + ': ' + d.total_tokens + ' tokens"></div>';
+                    });
+                    html += '  </div>';
+                    html += '  <div class="chart-axis-labels">';
+                    html += '    <span>' + (reversed[0].date || '') + '</span>';
+                    if(items.length >= 3){
+                        var mid = reversed[Math.floor(reversed.length/2)];
+                        html += '    <span>' + (mid ? mid.date : '') + '</span>';
+                    }
+                    html += '    <span>' + (reversed[reversed.length-1].date || '') + '</span>';
+                    html += '  </div>';
+                }
+                html += '</div>';
+
+                document.getElementById('tokenStatsBody').innerHTML = html;
+            })
+            .catch(function(){
+                document.getElementById('tokenStatsBody').innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444">加载失败</div>';
+            });
+    }
+
+    // ====== 批量操作 ======
+    function toggleAllCheckbox(){
+        var checked = document.getElementById('checkAll').checked;
+        document.querySelectorAll('#modelGrid input[type="checkbox"]').forEach(function(cb){ cb.checked = checked; });
+    }
+
+    function updateBatchState(){
+        var all = document.querySelectorAll('#modelGrid input[type="checkbox"]');
+        var checked = document.querySelectorAll('#modelGrid input[type="checkbox"]:checked');
+        document.getElementById('checkAll').checked = all.length > 0 && all.length == checked.length;
+    }
+
+    function getSelectedIds(){
+        var ids = [];
+        document.querySelectorAll('#modelGrid input[type="checkbox"]:checked').forEach(function(cb){ ids.push(parseInt(cb.value)); });
+        return ids;
+    }
+
+    function batchAction(action){
+        var ids = getSelectedIds();
+        if(!ids.length){ toast('请先选择模型', 'error'); return; }
+        var actionName = {delete:'删除', enable:'启用', disable:'禁用'}[action] || action;
+        if(action === 'delete' && !confirm('确定批量删除 ' + ids.length + ' 个模型？')) return;
+
+        var params = new URLSearchParams();
+        params.append('action', action);
+        params.append('ids', JSON.stringify(ids));
+
+        fetch('/admin/ai_model/batch', { method: 'POST', headers: getXsrfHeaders(), body: params })
+            .then(r => r.json())
+            .then(function(res){
+                toast(res.msg, res.code == 0 ? 'success' : 'error');
+                if(res.code == 0) loadModels(currentPage);
+            });
+    }
+
+    // ====== 工具函数 ======
+    function showModal(id){ document.getElementById(id).classList.add('show'); }
+    function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+    // 点击遮罩关闭
+    document.querySelectorAll('.modal-overlay').forEach(function(el){
+        el.addEventListener('click', function(e){ if(e.target === this) this.classList.remove('show'); });
+    });
+
+    function escapeHtml(str){
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function toast(msg, type){
+        type = type || 'info';
+        var t = document.createElement('div');
+        t.className = 'toast ' + type;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(function(){ t.remove(); }, 2500);
+    }
+    </script>
+</body>
+</html>

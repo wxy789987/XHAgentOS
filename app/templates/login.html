@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <link rel="stylesheet" href="{{ static_url('css/login.css') }}">
+    <style>
+        .role-select { width:100%; padding:12px 14px; border:1px solid #ddd; border-radius:8px; font-size:14px; outline:none; background:#f9f9f9; color:#333; appearance:auto; cursor:pointer; transition:border 0.3s,box-shadow 0.3s; }
+        .role-select:focus { border-color:#52c41a; box-shadow:0 0 0 3px rgba(82,196,26,0.15); }
+        .register-link { text-align:center; margin-top:12px; font-size:13px; color:#888; }
+        .register-link a { color:#52c41a; text-decoration:none; }
+        .register-link a:hover { text-decoration:underline; }
+    </style>
 </head>
 <body>
     <div class="login-wrapper">
@@ -12,7 +19,7 @@
             <div class="login-card">
                 <div class="login-header">
                     <h1>XHAgentOS</h1>
-                    <p>智能数据瞭望与问数系统 · 管理后台</p>
+                    <p>智能数据瞭望与问数系统</p>
                 </div>
                 <form class="login-form" method="post" action="/auth/login" id="loginForm">
                     {% module xsrf_form_html() %}
@@ -22,17 +29,20 @@
                     <div class="form-group">
                         <label for="username">用户名</label>
                         <div class="input-wrapper">
-                            <input type="text" id="username" name="username" placeholder="请输入用户名" value="admin" autocomplete="username">
+                            <input type="text" id="username" name="username" placeholder="请输入用户名" value="" autocomplete="username">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="password">密码</label>
                         <div class="input-wrapper">
-                            <input type="password" id="password" name="password" placeholder="请输入密码" value="admin123" autocomplete="current-password">
+                            <input type="password" id="password" name="password" placeholder="请输入密码" value="" autocomplete="current-password">
                         </div>
                     </div>
                     <button type="submit" class="login-btn">登 录</button>
                 </form>
+                <div class="register-link">
+                    还没有账号？<a href="/auth/register">立即注册</a>
+                </div>
                 <div class="login-footer">
                     <p>XHAgentOS v1.0 · 企业级智能数据平台</p>
                 </div>

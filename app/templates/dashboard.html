@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统仪表盘</title>
+    <link rel="stylesheet" href="{{ static_url('dist/layui/css/layui.css') }}">
+    <style>
+        body { background:#f2f2f2; padding:20px; }
+        .dashboard-title { font-size:20px; font-weight:bold; color:#333; margin-bottom:20px; padding-bottom:15px; border-bottom:2px solid #3b7cff; }
+        .dashboard-title small { font-weight:normal; font-size:14px; color:#999; margin-left:10px; }
+        .stats-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:24px; }
+        .stat-card { background:#fff; border-radius:8px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,0.08); display:flex; align-items:center; transition:transform 0.2s; }
+        .stat-card:hover { transform:translateY(-2px); box-shadow:0 3px 8px rgba(0,0,0,0.12); }
+        .stat-icon { width:54px; height:54px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-right:16px; font-size:28px; color:#fff; flex-shrink:0; }
+        .stat-icon.blue { background:linear-gradient(135deg, #3b7cff, #6ba3ff); }
+        .stat-icon.green { background:linear-gradient(135deg, #5fb878, #8dda9e); }
+        .stat-icon.orange { background:linear-gradient(135deg, #ffb800, #ffce3c); }
+        .stat-icon.purple { background:linear-gradient(135deg, #a855f7, #c084fc); }
+        .stat-info h3 { font-size:28px; margin:0; color:#333; line-height:1.2; }
+        .stat-info p { margin:4px 0 0; color:#999; font-size:13px; }
+        .dashboard-panel { background:#fff; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.08); padding:20px; margin-top:16px; }
+        .panel-header { font-size:15px; font-weight:bold; padding-bottom:12px; border-bottom:1px solid #f0f0f0; margin-bottom:15px; color:#333; }
+        .panel-header .layui-icon { margin-right:6px; color:#3b7cff; }
+        .user-list-item { padding:8px 0; border-bottom:1px solid #f5f5f5; display:flex; align-items:center; justify-content:space-between; font-size:13px; }
+        .user-list-item:last-child { border-bottom:none; }
+        .user-role-badge { padding:2px 10px; border-radius:10px; font-size:12px; }
+        .user-role-badge.admin { background:#fff0e6; color:#ff6b00; }
+        .user-role-badge.user { background:#e6f7ff; color:#3b7cff; }
+        .user-time { color:#999; font-size:12px; }
+        .welcome-text { margin-bottom:20px; color:#666; font-size:14px; }
+        .system-status { display:flex; gap:12px; margin-top:10px; }
+        .status-item { padding:6px 14px; border-radius:20px; font-size:12px; }
+        .status-item.online { background:#e6f7ff; color:#1890ff; }
+        .status-item.version { background:#f6ffed; color:#52c41a; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-title">
+        <i class="layui-icon layui-icon-home"></i> 系统仪表盘
+        <small>系统运行状态总览</small>
+    </div>
+
+    <div class="welcome-text" id="welcomeText">欢迎回来，正在加载数据...</div>
+
+    <div class="system-status">
+        <span class="status-item online"><i class="layui-icon layui-icon-circle"></i> 系统运行中</span>
+        <span class="status-item version"><i class="layui-icon layui-icon-set"></i> 版本 v1.0.0</span>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-icon blue"><i class="layui-icon layui-icon-user"></i></div><div class="stat-info"><h3 id="statUsers">-</h3><p>用户总数</p></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="layui-icon layui-icon-auz"></i></div><div class="stat-info"><h3 id="statRoles">-</h3><p>角色总数</p></div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="layui-icon layui-icon-set"></i></div><div class="stat-info"><h3 id="statFeatures">-</h3><p>功能模块</p></div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="layui-icon layui-icon-username"></i></div><div class="stat-info"><h3 id="statNormalUsers">-</h3><p>普通用户</p></div></div>
+    </div>
+
+    <div class="dashboard-panel">
+        <div class="panel-header"><i class="layui-icon layui-icon-time"></i> 最近注册用户</div>
+        <div id="recentUsers"><div style="text-align:center;padding:20px;color:#999;">加载中...</div></div>
+    </div>
+
+    <script src="{{ static_url('dist/layui/layui.js') }}"></script>
+    <script>
+        layui.use(['jquery'], function(){
+            var $ = layui.jquery;
+            $.getJSON('/admin/dashboard/data', function(data){
+                $('#statUsers').text(data.user_total || 0);
+                $('#statRoles').text(data.role_total || 0);
+                $('#statFeatures').text(data.feature_total || 0);
+                $('#statNormalUsers').text(data.normal_user_count || 0);
+                $('#welcomeText').html('欢迎回来！系统共有 <strong>' + data.user_total + '</strong> 个用户，<strong>' + data.role_total + '</strong> 种角色。');
+
+                var html = '';
+                $.each(data.recent_users, function(i, u){
+                    var roleClass = (u.role_name === '超级管理员') ? 'admin' : 'user';
+                    html += '<div class="user-list-item">';
+                    html += '<span><i class="layui-icon layui-icon-user" style="margin-right:6px;color:#999;"></i> ' + u.username + '</span>';
+                    html += '<span><span class="user-role-badge ' + roleClass + '">' + (u.role_name || '普通用户') + '</span>';
+                    html += ' <span class="user-time">' + (u.create_at || '') + '</span></span>';
+                    html += '</div>';
+                });
+                if (!data.recent_users || data.recent_users.length === 0) {
+                    html = '<div style="text-align:center;padding:20px;color:#999;">暂无用户</div>';
+                }
+                $('#recentUsers').html(html);
+            }).fail(function(){
+                $('#welcomeText').text('数据加载失败，请刷新页面重试。');
+                $('#recentUsers').html('<div style="text-align:center;padding:20px;color:red;">加载失败</div>');
+            });
+        });
+    </script>
+</body>
+</html>

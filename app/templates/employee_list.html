@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ static_url('dist/layui/css/layui.css') }}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #0a0e1a;
+            color: #c8d6e5;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0e1a; }
+        ::-webkit-scrollbar-thumb { background: #2d3a6e; border-radius: 3px; }
+
+        .page-header {
+            padding: 24px 30px 10px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(0, 255, 255, .1);
+        }
+        .page-header h1 {
+            font-size: 24px; font-weight: 700;
+            background: linear-gradient(135deg, #00d2ff, #a855f7);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .page-header .actions { display: flex; gap: 12px; align-items: center; }
+
+        .btn-primary {
+            padding: 8px 20px; border: none; border-radius: 6px;
+            background: linear-gradient(135deg, #00d2ff, #3b82f6);
+            color: #fff; cursor: pointer; font-size: 14px; transition: all .3s;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(0, 210, 255, .3); }
+        .btn-secondary {
+            padding: 8px 20px; border: 1px solid rgba(0, 255, 255, .2); border-radius: 6px;
+            background: transparent; color: #00d2ff; cursor: pointer; font-size: 14px;
+            transition: all .3s;
+        }
+        .btn-secondary:hover { background: rgba(0, 255, 255, .05); border-color: #00d2ff; }
+        .btn-danger {
+            padding: 6px 14px; border: none; border-radius: 6px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: #fff; cursor: pointer; font-size: 12px; transition: all .3s;
+        }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+        .content { padding: 20px 30px; }
+
+        .filter-bar {
+            display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .filter-bar input, .filter-bar select {
+            padding: 8px 14px; border: 1px solid rgba(0, 255, 255, .15); border-radius: 6px;
+            background: rgba(255,255,255,.05); color: #c8d6e5; font-size: 14px; outline: none;
+            transition: all .3s; min-width: 200px;
+        }
+        .filter-bar input:focus, .filter-bar select:focus { border-color: #00d2ff; box-shadow: 0 0 8px rgba(0,210,255,.15); }
+
+        .emp-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 18px; margin-bottom: 20px;
+        }
+        .emp-card {
+            background: linear-gradient(135deg, rgba(15,23,58,.8), rgba(30,27,75,.8));
+            border: 1px solid rgba(0, 255, 255, .1); border-radius: 12px;
+            padding: 20px; transition: all .3s; position: relative;
+        }
+        .emp-card:hover { border-color: rgba(0, 210, 255, .3); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,.3); }
+        .emp-card .status-badge {
+            position: absolute; top: 12px; right: 12px;
+            padding: 2px 10px; border-radius: 10px; font-size: 11px;
+        }
+        .emp-card .status-badge.active { background: rgba(0,200,83,.15); color: #5FB878; }
+        .emp-card .status-badge.inactive { background: rgba(255,77,77,.15); color: #ff6b6b; }
+        .emp-card .avatar {
+            width: 48px; height: 48px; border-radius: 12px;
+            background: linear-gradient(135deg, #00d2ff, #a855f7);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: #fff; margin-bottom: 12px;
+        }
+        .emp-card h3 { font-size: 16px; color: #e2e8f0; margin-bottom: 4px; }
+        .emp-card .desc {
+            font-size: 13px; color: rgba(255,255,255,.5);
+            line-height: 1.6; margin-bottom: 12px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .emp-card .meta {
+            display: flex; gap: 16px; font-size: 12px; color: rgba(255,255,255,.35);
+            padding-top: 12px; border-top: 1px solid rgba(255,255,255,.05);
+        }
+        .emp-card .meta span { display: flex; align-items: center; gap: 4px; }
+        .emp-card .actions {
+            display: flex; gap: 8px; margin-top: 12px;
+        }
+
+        .pagination {
+            display: flex; justify-content: center; gap: 8px; align-items: center;
+            padding: 20px 0; color: rgba(255,255,255,.5); font-size: 13px;
+        }
+        .pagination button {
+            padding: 6px 14px; border: 1px solid rgba(0,255,255,.15); border-radius: 6px;
+            background: transparent; color: #c8d6e5; cursor: pointer;
+        }
+        .pagination button:hover { border-color: #00d2ff; }
+        .pagination button:disabled { opacity: .3; cursor: not-allowed; }
+        .pagination .page-info { padding: 0 10px; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,.7); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #1a1f3a; border: 1px solid rgba(0,255,255,.15); border-radius: 16px;
+            width: 680px; max-width: 90vw; max-height: 85vh; overflow-y: auto;
+            padding: 30px; position: relative;
+        }
+        .modal-box h2 { font-size: 20px; margin-bottom: 20px; color: #e2e8f0; }
+        .modal-close {
+            position: absolute; top: 15px; right: 20px; cursor: pointer;
+            font-size: 24px; color: rgba(255,255,255,.3); transition: color .3s;
+        }
+        .modal-close:hover { color: #ff6b6b; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: rgba(255,255,255,.6); }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px 14px; border: 1px solid rgba(0,255,255,.15); border-radius: 8px;
+            background: rgba(255,255,255,.05); color: #c8d6e5; font-size: 14px; outline: none;
+            transition: all .3s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #00d2ff; box-shadow: 0 0 8px rgba(0,210,255,.15);
+        }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .form-group .help-text { font-size: 12px; color: rgba(255,255,255,.35); margin-top: 4px; }
+        .form-group .checkbox-group {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;
+        }
+        .form-group .checkbox-group label {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 12px; border: 1px solid rgba(0,255,255,.15); border-radius: 6px;
+            cursor: pointer; font-size: 13px; transition: all .3s;
+        }
+        .form-group .checkbox-group label:hover { border-color: #00d2ff; }
+        .form-group .checkbox-group label.checked {
+            border-color: #00d2ff; background: rgba(0,210,255,.1);
+        }
+        .form-group .checkbox-group input[type="checkbox"] { display: none; }
+
+        /* Call result */
+        .call-result { background: rgba(0,0,0,.3); border-radius: 8px; padding: 15px; margin-top: 10px; max-height: 300px; overflow: auto; }
+        .call-result pre { white-space: pre-wrap; word-break: break-all; font-size: 12px; color: #00d2ff; }
+
+        .toast {
+            position: fixed; top: 20px; right: 20px; padding: 12px 24px; border-radius: 8px;
+            z-index: 2000; display: none; font-size: 14px;
+        }
+        .toast.success { background: rgba(0,200,83,.9); color: #fff; display: block; }
+        .toast.error { background: rgba(255,77,77,.9); color: #fff; display: block; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; }
+        .badge-model { background: rgba(168,85,247,.15); color: #a855f7; }
+        .badge-skill { background: rgba(0,210,255,.15); color: #00d2ff; }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1>数字员工管理</h1>
+        <div class="actions">
+            <button class="btn-primary" onclick="showAddModal()">+ 新增数字员工</button>
+        </div>
+    </div>
+    <div class="content">
+        <div class="filter-bar">
+            <input type="text" id="fKeyword" placeholder="搜索数字员工名称/描述..." oninput="doSearch()">
+        </div>
+        <div id="empList" class="emp-grid"></div>
+        <div id="pagination" class="pagination"></div>
+    </div>
+
+    <!-- 新增/编辑弹窗 -->
+    <div class="modal-overlay" id="empModal">
+        <div class="modal-box">
+            <span class="modal-close" onclick="closeModal('empModal')">&times;</span>
+            <h2 id="modalTitle">新增数字员工</h2>
+            <input type="hidden" id="editId" value="0">
+            <div class="form-group">
+                <label>数字员工名称 <span style="color:#ff6b6b;">*</span></label>
+                <input type="text" id="fName" placeholder="如：智能助手、数据分析师">
+            </div>
+            <div class="form-group">
+                <label>选择AI模型 <span style="color:#ff6b6b;">*</span></label>
+                <select id="fModel"></select>
+            </div>
+            <div class="form-group">
+                <label>简单描述</label>
+                <textarea id="fDesc" placeholder="描述数字员工的职责和适用场景"></textarea>
+            </div>
+            <div class="form-group">
+                <label>技能列表（选择后可自动生成系统提示词）</label>
+                <div id="skillCheckboxes" class="checkbox-group"></div>
+                <div class="help-text">只能选择已经创建的技能，选中后点击"自动生成提示词"按钮</div>
+            </div>
+            <div class="form-group">
+                <label>系统提示词</label>
+                <textarea id="fPrompt" rows="5" placeholder="用于约束数字员工的调用范围和能力..."></textarea>
+                <div style="margin-top:6px;display:flex;gap:8px;align-items:center;">
+                    <button type="button" class="btn-secondary btn-sm" onclick="generatePrompt()">自动生成提示词</button>
+                    <span id="promptStatus" style="font-size:12px;color:rgba(255,255,255,.35);"></span>
+                </div>
+            </div>
+            <div style="text-align:right;margin-top:20px;">
+                <button class="btn-secondary" onclick="closeModal('empModal')" style="margin-right:10px;">取消</button>
+                <button class="btn-primary" onclick="saveEmployee()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 调用/测试弹窗 -->
+    <div class="modal-overlay" id="callModal">
+        <div class="modal-box">
+            <span class="modal-close" onclick="closeModal('callModal')">&times;</span>
+            <h2 id="callTitle">测试数字员工</h2>
+            <input type="hidden" id="callEmpId" value="0">
+            <div class="form-group">
+                <label>输入内容</label>
+                <textarea id="callInput" rows="4" placeholder="输入要提问的内容..."></textarea>
+            </div>
+            <div id="callResult" style="display:none;" class="call-result"></div>
+            <div style="text-align:right;margin-top:20px;">
+                <button class="btn-secondary" onclick="closeModal('callModal')" style="margin-right:10px;">关闭</button>
+                <button class="btn-primary" id="callBtn" onclick="executeCall()">执行</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ static_url('dist/layui/layui.js') }}"></script>
+    <script>
+        function getXsrfToken() {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var c = cookies[i].trim();
+                if (c.indexOf('_xsrf=') === 0) return c.substring(6);
+            }
+            return '';
+        }
+        var xsrf = getXsrfToken();
+        var currentPage = 1;
+        var allSkills = [];
+        var allModels = [];
+
+        function doSearch(){ currentPage = 1; loadEmployees(); }
+        function loadEmployees(){
+            var kw = document.getElementById('fKeyword').value;
+            fetch('/admin/employee/list?page=' + currentPage + '&page_size=12&keyword=' + encodeURIComponent(kw))
+                .then(function(r){ return r.json(); })
+                .then(function(data){
+                    var html = '';
+                    if(data.items && data.items.length > 0){
+                        data.items.forEach(function(e){
+                            var statusCls = e.is_active ? 'active' : 'inactive';
+                            var statusLabel = e.is_active ? '启用' : '停用';
+                            var desc = e.description || '暂无描述';
+                            html += '<div class="emp-card">';
+                            html += '<span class="status-badge ' + statusCls + '">' + statusLabel + '</span>';
+                            html += '<div class="avatar">' + e.name.charAt(0).toUpperCase() + '</div>';
+                            html += '<h3>' + escapeHtml(e.name) + '</h3>';
+                            html += '<div class="desc">' + escapeHtml(desc) + '</div>';
+                            html += '<div class="meta">';
+                            html += '<span><span class="badge badge-model">' + escapeHtml(e.model_name || '未选择') + '</span></span>';
+                            html += '<span><span class="badge badge-skill">' + (e.skill_count || 0) + ' 技能</span></span>';
+                            html += '<span>' + e.create_at + '</span>';
+                            html += '</div>';
+                            html += '<div class="actions">';
+                            html += '<button class="btn-primary btn-sm" onclick="testEmployee(' + e.id + ')">测试</button>';
+                            html += '<button class="btn-secondary btn-sm" onclick="viewEmployee(' + e.id + ')">详情</button>';
+                            html += '<button class="btn-secondary btn-sm" onclick="editEmployee(' + e.id + ')">编辑</button>';
+                            html += '<button class="btn-danger btn-sm" onclick="deleteEmployee(' + e.id + ')">删除</button>';
+                            html += '</div></div>';
+                        });
+                    } else {
+                        html = '<div style="text-align:center;padding:60px 0;color:rgba(255,255,255,.3);">暂无数字员工，点击右上角"新增数字员工"开始</div>';
+                    }
+                    document.getElementById('empList').innerHTML = html;
+                    renderPagination(data);
+                });
+        }
+
+        function escapeHtml(t){
+            if(!t) return '';
+            return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function renderPagination(data){
+            var total = data.total || 0;
+            var page = data.page || 1;
+            var size = data.page_size || 12;
+            var pages = Math.max(1, Math.ceil(total / size));
+            var html = '';
+            html += '<button onclick="goPage(' + (page-1) + ')" ' + (page<=1?'disabled':'') + '>上一页</button>';
+            html += '<span class="page-info">' + page + ' / ' + pages + '</span>';
+            html += '<button onclick="goPage(' + (page+1) + ')" ' + (page>=pages?'disabled':'') + '>下一页</button>';
+            document.getElementById('pagination').innerHTML = html;
+        }
+        function goPage(p){ currentPage = p; loadEmployees(); }
+
+        // 加载模型和技能数据
+        function loadModelsAndSkills(callback){
+            var loaded = 0;
+            function checkDone(){
+                loaded++;
+                if(loaded >= 2 && callback) callback();
+            }
+            fetch('/admin/employee/models')
+                .then(function(r){ return r.json(); })
+                .then(function(res){
+                    if(res.code === 0) allModels = res.data || [];
+                    checkDone();
+                }).catch(function(){ checkDone(); });
+
+            fetch('/admin/employee/skills')
+                .then(function(r){ return r.json(); })
+                .then(function(res){
+                    if(res.code === 0) allSkills = res.data || [];
+                    checkDone();
+                }).catch(function(){ checkDone(); });
+        }
+
+        function refreshSkillCheckboxes(selectedIds){
+            var html = '';
+            if(allSkills.length === 0){
+                html = '<span style="color:rgba(255,255,255,.3);font-size:13px;">暂无可用技能，请先创建技能</span>';
+            } else {
+                allSkills.forEach(function(s){
+                    var checked = selectedIds.indexOf(s.id) !== -1;
+                    var checkedCls = checked ? 'checked' : '';
+                    html += '<label class="checkbox-skill ' + checkedCls + '" data-skill-id="' + s.id + '" onclick="toggleSkill(this, event)">';
+                    html += '<input type="checkbox" ' + (checked ? 'checked' : '') + '>';
+                    html += '<span>' + escapeHtml(s.name) + '</span>';
+                    html += '<span style="font-size:11px;color:rgba(255,255,255,.3);">(' + s.skill_type + ')</span>';
+                    html += '</label>';
+                });
+            }
+            document.getElementById('skillCheckboxes').innerHTML = html;
+        }
+
+        function toggleSkill(el, event){
+            if(event) event.preventDefault();
+            var cb = el.querySelector('input[type="checkbox"]');
+            cb.checked = !cb.checked;
+            el.classList.toggle('checked');
+        }
+
+        function getSelectedSkillIds(){
+            var ids = [];
+            var labels = document.querySelectorAll('#skillCheckboxes label.checkbox-skill.checked');
+            labels.forEach(function(l){
+                var id = parseInt(l.getAttribute('data-skill-id'));
+                if(id) ids.push(id);
+            });
+            return ids;
+        }
+
+        // 新增弹窗
+        function showAddModal(){
+            document.getElementById('modalTitle').textContent = '新增数字员工';
+            document.getElementById('editId').value = '0';
+            document.getElementById('fName').value = '';
+            document.getElementById('fDesc').value = '';
+            document.getElementById('fPrompt').value = '';
+            document.getElementById('promptStatus').textContent = '';
+            loadModelsAndSkills(function(){
+                renderModelSelect(0);
+                refreshSkillCheckboxes([]);
+            });
+            document.getElementById('empModal').classList.add('show');
+        }
+
+        function renderModelSelect(selectedId){
+            var sel = document.getElementById('fModel');
+            sel.innerHTML = '<option value="0">-- 请选择模型 --</option>';
+            allModels.forEach(function(m){
+                var selected = m.id === selectedId ? 'selected' : '';
+                sel.innerHTML += '<option value="' + m.id + '" ' + selected + '>' + escapeHtml(m.name) + ' (' + m.model_name + ')</option>';
+            });
+        }
+
+        // 编辑弹窗
+        function editEmployee(id){
+            document.getElementById('modalTitle').textContent = '编辑数字员工';
+            document.getElementById('editId').value = id;
+            document.getElementById('promptStatus').textContent = '';
+            loadModelsAndSkills(function(){
+                fetch('/admin/employee/get?id=' + id)
+                    .then(function(r){ return r.json(); })
+                    .then(function(res){
+                        if(res.code !== 0){ showToast('error', res.msg); return; }
+                        var e = res.data;
+                        document.getElementById('fName').value = e.name || '';
+                        document.getElementById('fDesc').value = e.description || '';
+                        document.getElementById('fPrompt').value = e.system_prompt || '';
+                        renderModelSelect(e.model_id || 0);
+                        refreshSkillCheckboxes(e.skill_ids || []);
+                        document.getElementById('empModal').classList.add('show');
+                    })
+                    .catch(function(err){ showToast('error', '加载失败: ' + err.message); });
+            });
+        }
+
+        // 自动生成提示词
+        function generatePrompt(){
+            var name = document.getElementById('fName').value.trim();
+            var desc = document.getElementById('fDesc').value.trim();
+            var modelId = parseInt(document.getElementById('fModel').value) || 0;
+            var skillIds = getSelectedSkillIds();
+            if(!name){ showToast('error', '请先输入数字员工名称'); return; }
+            document.getElementById('promptStatus').textContent = '生成中...';
+            fetch('/admin/employee/generate_prompt', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'name=' + encodeURIComponent(name) + '&description=' + encodeURIComponent(desc) + '&skill_ids=' + encodeURIComponent(JSON.stringify(skillIds)) + '&model_id=' + modelId + '&_xsrf=' + xsrf
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+                if(res.code === 0 && res.data && res.data.system_prompt){
+                    document.getElementById('fPrompt').value = res.data.system_prompt;
+                    document.getElementById('promptStatus').textContent = '生成成功！';
+                } else {
+                    document.getElementById('promptStatus').textContent = '生成失败';
+                }
+            })
+            .catch(function(){
+                document.getElementById('promptStatus').textContent = '生成失败';
+            });
+        }
+
+        // 保存
+        function saveEmployee(){
+            var id = document.getElementById('editId').value;
+            var name = document.getElementById('fName').value.trim();
+            var modelId = parseInt(document.getElementById('fModel').value) || 0;
+            var desc = document.getElementById('fDesc').value.trim();
+            var prompt = document.getElementById('fPrompt').value.trim();
+            var skillIds = getSelectedSkillIds();
+
+            if(!name){ showToast('error', '数字员工名称不能为空'); return; }
+            if(!modelId){ showToast('error', '请选择AI模型'); return; }
+
+            var url = id > 0 ? '/admin/employee/edit' : '/admin/employee/add';
+            var body = 'name=' + encodeURIComponent(name) +
+                       '&model_id=' + modelId +
+                       '&skill_ids=' + encodeURIComponent(JSON.stringify(skillIds)) +
+                       '&description=' + encodeURIComponent(desc) +
+                       '&system_prompt=' + encodeURIComponent(prompt) +
+                       '&auto_generate=0' +
+                       '&_xsrf=' + xsrf;
+            if(id > 0) body += '&id=' + id;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: body
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+                if(res.code === 0){
+                    showToast('success', id > 0 ? '更新成功' : '新增成功');
+                    closeModal('empModal');
+                    loadEmployees();
+                } else {
+                    showToast('error', res.msg);
+                }
+            })
+            .catch(function(err){ showToast('error', '请求失败: ' + err.message); });
+        }
+
+        // 删除
+        function deleteEmployee(id){
+            if(!confirm('确定删除该数字员工吗？')) return;
+            fetch('/admin/employee/delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'id=' + id + '&_xsrf=' + xsrf
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+                if(res.code === 0){ showToast('success', '删除成功'); loadEmployees(); }
+                else { showToast('error', res.msg); }
+            })
+            .catch(function(err){ showToast('error', '删除失败: ' + err.message); });
+        }
+
+        // 查看详情
+        function viewEmployee(id){
+            window.open('/admin/employee/detail?id=' + id, '_blank');
+        }
+
+        // 测试/调用
+        function testEmployee(id){
+            document.getElementById('callEmpId').value = id;
+            document.getElementById('callTitle').textContent = '测试数字员工';
+            document.getElementById('callInput').value = '';
+            document.getElementById('callResult').style.display = 'none';
+            document.getElementById('callBtn').disabled = false;
+            document.getElementById('callBtn').textContent = '执行';
+            document.getElementById('callModal').classList.add('show');
+        }
+
+        function executeCall(){
+            var empId = document.getElementById('callEmpId').value;
+            var input = document.getElementById('callInput').value.trim();
+            if(!input){ showToast('error', '请输入内容'); return; }
+
+            document.getElementById('callBtn').disabled = true;
+            document.getElementById('callBtn').textContent = '执行中...';
+            document.getElementById('callResult').style.display = 'none';
+
+            fetch('/admin/employee/call', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'employee_id=' + empId + '&input_data=' + encodeURIComponent(JSON.stringify({text: input})) + '&_xsrf=' + xsrf
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+                document.getElementById('callBtn').disabled = false;
+                document.getElementById('callBtn').textContent = '执行';
+                var html = '';
+                if(res.code === 0 && res.data){
+                    html += '<div style="color:#5FB878;margin-bottom:8px;">调用成功</div>';
+                    html += '<div style="color:rgba(255,255,255,.5);font-size:12px;margin-bottom:6px;">模型: ' + escapeHtml(res.data.model || '') + '</div>';
+                    html += '<pre>' + escapeHtml(res.data.reply || JSON.stringify(res.data, null, 2)) + '</pre>';
+                } else {
+                    html += '<div style="color:#ff6b6b;margin-bottom:8px;">调用失败: ' + escapeHtml(res.msg) + '</div>';
+                }
+                document.getElementById('callResult').innerHTML = html;
+                document.getElementById('callResult').style.display = 'block';
+            })
+            .catch(function(err){
+                document.getElementById('callBtn').disabled = false;
+                document.getElementById('callBtn').textContent = '执行';
+                document.getElementById('callResult').innerHTML = '<div style="color:#ff6b6b;">执行失败: ' + escapeHtml(err.message) + '</div>';
+                document.getElementById('callResult').style.display = 'block';
+            });
+        }
+
+        function closeModal(id){
+            document.getElementById(id).classList.remove('show');
+        }
+
+        function showToast(type, msg){
+            var el = document.getElementById('toast');
+            el.className = 'toast ' + type;
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(function(){ el.style.display = 'none'; }, 3000);
+        }
+
+        loadEmployees();
+    </script>
+</body>
+</html>

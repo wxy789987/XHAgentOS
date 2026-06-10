@@ -27,16 +27,18 @@
             return '';
         }
 
-        layui.use(['table', 'layer', 'form'], function(){
+        layui.use(['table', 'layer', 'form', 'jquery'], function(){
             var table = layui.table;
             var layer = layui.layer;
             var form = layui.form;
             var $ = layui.jquery;
+            window.$ = $;
 
             // 渲染功能树表
-            table.render({
+            window.featureTable = table.render({
                 elem: '#featureTable',
                 url: '/admin/feature/tree',
+                id: 'featureTable',
                 page: false,
                 cols: [[
                     {type: 'numbers', title: '序号', width: 80, align: 'center'},
@@ -91,7 +93,9 @@
                                 $.post('/admin/feature/edit', fd.field, function(res){
                                     if(res.code === 0){ layer.msg('更新成功',{icon:1}); layer.closeAll(); table.reload('featureTable'); }
                                     else layer.msg(res.msg,{icon:2});
-                                },'json');
+                                },'json').fail(function(xhr){
+                                    layer.msg('编辑请求失败: ' + (xhr.statusText || '网络错误'), {icon: 2});
+                                });
                                 return false;
                             });
                         }
@@ -99,9 +103,14 @@
                 } else if(obj.event === 'del'){
                     layer.confirm('确定删除功能「' + data.name.replace(/[^\\u4e00-\\u9fa5\\w]/g,'') + '」及其子功能？', function(idx){
                         $.post('/admin/feature/delete', {id: data.id, _xsrf: getXsrfToken()}, function(res){
-                            if(res.code === 0){ layer.msg('删除成功',{icon:1}); table.reload('featureTable'); }
+                            if(res.code === 0){
+                                layer.msg('删除成功',{icon:1});
+                                table.reload('featureTable');
+                            }
                             else layer.msg(res.msg,{icon:2});
-                        },'json');
+                        },'json').fail(function(xhr){
+                            layer.msg('删除请求失败: ' + (xhr.statusText || '网络错误'), {icon: 2});
+                        });
                         layer.close(idx);
                     });
                 }
@@ -119,7 +128,9 @@
                             $.post('/admin/feature/add', fd.field, function(res){
                                 if(res.code === 0){ layer.msg('新增成功',{icon:1}); layer.closeAll(); table.reload('featureTable'); }
                                 else layer.msg(res.msg,{icon:2});
-                            },'json');
+                            },'json').fail(function(xhr){
+                                layer.msg('新增请求失败: ' + (xhr.statusText || '网络错误'), {icon: 2});
+                            });
                             return false;
                         });
                     }
@@ -136,7 +147,7 @@
             <div class="layui-form-item"><label class="layui-form-label">编码</label>
                 <div class="layui-input-block"><input type="text" name="code" required class="layui-input" placeholder="如：user_mgr"></div></div>
             <div class="layui-form-item"><label class="layui-form-label">图标</label>
-                <div class="layui-input-block"><input type="text" name="icon" class="layui-input" placeholder="layui-icon-user"></div></div>
+                <div class="layui-input-block"><input type="text" name="icon" class="layui-input" placeholder="如：layui-icon-user"></div></div>
             <div class="layui-form-item"><label class="layui-form-label">父级ID</label>
                 <div class="layui-input-block"><input type="number" name="parent_id" class="layui-input" value="0" placeholder="0为一级菜单"></div></div>
             <div class="layui-form-item"><label class="layui-form-label">URL</label>

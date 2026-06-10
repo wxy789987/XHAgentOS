@@ -11,7 +11,7 @@ class FeatureRepository:
             rows = conn.execute(
                 "SELECT * FROM features ORDER BY sort ASC, id ASC"
             ).fetchall()
-        return rows
+        return [dict(r) for r in rows]
 
     @staticmethod
     def get_tree():

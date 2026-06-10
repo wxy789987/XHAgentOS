@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/layui-v2.9.8/dist/css/layui.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html,body { height:100%; font-family:"Microsoft YaHei",sans-serif; background:linear-gradient(135deg, #0c0e1a 0%, #1a1f3a 50%, #0c0e1a 100%); color:#fff; }
+        .header { background:rgba(255,255,255,0.05); backdrop-filter:blur(20px); border-bottom:1px solid rgba(255,255,255,0.08); padding:0 40px; display:flex; align-items:center; justify-content:space-between; height:64px; position:fixed; top:0; left:0; right:0; z-index:100; }
+        .logo { font-size:22px; font-weight:700; background:linear-gradient(90deg, #52c41a, #1E9FFF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .header-right { display:flex; align-items:center; gap:20px; }
+        .header-right .username { font-size:14px; color:rgba(255,255,255,0.8); }
+        .header-right .logout-btn { padding:6px 18px; border:1px solid rgba(255,255,255,0.2); border-radius:6px; background:transparent; color:rgba(255,255,255,0.7); font-size:13px; cursor:pointer; transition:all 0.2s; }
+        .header-right .logout-btn:hover { border-color:#ff5722; color:#ff5722; }
+        .main { padding-top:84px; max-width:1200px; margin:0 auto; padding-left:24px; padding-right:24px; }
+        .hero { text-align:center; padding:60px 0 40px; }
+        .hero h1 { font-size:36px; font-weight:700; background:linear-gradient(90deg, #52c41a, #1E9FFF, #5FB878); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .hero p { color:rgba(255,255,255,0.5); font-size:16px; margin-top:10px; }
+        .card-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:20px; padding:20px 0 60px; }
+        .feature-card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:30px 24px; cursor:pointer; transition:all 0.3s; text-decoration:none; color:#fff; position:relative; overflow:hidden; }
+        .feature-card:hover { transform:translateY(-4px); border-color:rgba(82,196,26,0.3); box-shadow:0 12px 40px rgba(82,196,26,0.1); background:rgba(255,255,255,0.08); }
+        .feature-card .icon { font-size:36px; margin-bottom:16px; display:block; }
+        .feature-card h3 { font-size:18px; font-weight:600; margin-bottom:8px; }
+        .feature-card p { font-size:13px; color:rgba(255,255,255,0.5); line-height:1.6; }
+        .feature-card .arrow { position:absolute; right:20px; bottom:20px; font-size:18px; color:rgba(255,255,255,0.2); transition:all 0.3s; }
+        .feature-card:hover .arrow { color:#52c41a; right:16px; }
+        .footer { text-align:center; padding:30px; color:rgba(255,255,255,0.3); font-size:12px; border-top:1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">XHAgentOS</div>
+        <div class="header-right">
+            <span class="username">👤 {{ username }}</span>
+            <a href="/auth/logout"><button class="logout-btn">退出登录</button></a>
+        </div>
+    </div>
+    <div class="main">
+        <div class="hero">
+            <h1>欢迎回来，{{ username }}</h1>
+            <p>选择一项功能开始您的智能数据之旅</p>
+        </div>
+        <div class="card-grid">
+            <a class="feature-card" href="/user/chat?tab=employees">
+                <span class="icon">🤖</span>
+                <h3>数字员工</h3>
+                <p>与配置好的数字员工互动，完成各类智能任务</p>
+                <span class="arrow">→</span>
+            </a>
+            <a class="feature-card" href="/user/chat?tab=friends">
+                <span class="icon">👥</span>
+                <h3>好友与群组</h3>
+                <p>管理好友列表，创建或加入群组，与多人协作</p>
+                <span class="arrow">→</span>
+            </a>
+            <a class="feature-card" href="/user/chat?tab=employees">
+                <span class="icon">💬</span>
+                <h3>智能对话</h3>
+                <p>与数字员工进行智能对话，获取专业回答与帮助</p>
+                <span class="arrow">→</span>
+            </a>
+            <a class="feature-card" href="/user/chat#analysis">
+                <span class="icon">📊</span>
+                <h3>对话分析</h3>
+                <p>查看与数字员工的对话记录，支持导出与统计</p>
+                <span class="arrow">→</span>
+            </a>
+        </div>
+    </div>
+    <div class="footer">
+        XHAgentOS v1.0 · 企业级智能数据平台
+    </div>
+</body>
+</html>

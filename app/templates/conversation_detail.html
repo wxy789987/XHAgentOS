@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ static_url('dist/layui/css/layui.css') }}">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:#0a0e1a; color:#c8d6e5; min-height:100vh; padding:30px; }
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-track { background:#0a0e1a; }
+        ::-webkit-scrollbar-thumb { background:#2d3a6e; border-radius:3px; }
+
+        .back-link { display:inline-block; margin-bottom:20px; color:#00d2ff; text-decoration:none; font-size:14px; }
+        .back-link:hover { color:#a855f7; }
+
+        .header-card {
+            background: linear-gradient(135deg,rgba(15,23,58,.8),rgba(30,27,75,.8));
+            border:1px solid rgba(0,255,255,.1); border-radius:16px; padding:20px 30px; margin-bottom:20px;
+        }
+        .header-card h2 { font-size:20px; color:#e2e8f0; margin:0; }
+        .header-card .meta { font-size:12px; color:rgba(255,255,255,.4); margin-top:6px; }
+        .header-card .actions { display:flex; gap:8px; margin-top:10px; }
+
+        .layout { display:flex; gap:20px; align-items:flex-start; }
+        .main-area { flex:1; min-width:0; }
+        .side-area { width:380px; flex-shrink:0; }
+
+        .card {
+            background: linear-gradient(135deg,rgba(15,23,58,.8),rgba(30,27,75,.8));
+            border:1px solid rgba(0,255,255,.1); border-radius:12px; padding:20px; margin-bottom:20px;
+        }
+        .card h3 { font-size:15px; color:#00d2ff; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid rgba(0,255,255,.1); }
+
+        .msg-item { padding:12px 16px; border:1px solid rgba(255,255,255,.05); border-radius:8px; margin-bottom:8px; }
+        .msg-item:hover { border-color:rgba(0,210,255,.15); }
+        .msg-item .msg-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+        .msg-item .msg-role { padding:2px 8px; border-radius:6px; font-size:11px; }
+        .msg-role.user { background:rgba(0,210,255,.15); color:#00d2ff; }
+        .msg-role.assistant { background:rgba(168,85,247,.15); color:#a855f7; }
+        .msg-role.system { background:rgba(255,255,255,.1); color:rgba(255,255,255,.5); }
+        .msg-item .msg-time { font-size:11px; color:rgba(255,255,255,.3); }
+        .msg-item .msg-content { font-size:13px; color:#e2e8f0; line-height:1.6; margin-top:4px; }
+        .msg-item .msg-analysis { margin-top:8px; padding:8px 12px; background:rgba(0,0,0,.2); border-radius:6px; font-size:11px; color:rgba(255,255,255,.5); }
+        .msg-item .msg-analysis span { margin-right:12px; }
+        .msg-item .violation-tag { display:inline-block; padding:2px 8px; border-radius:6px; font-size:10px; background:rgba(255,77,77,.15); color:#ff6b6b; margin-left:6px; }
+
+        .violation-item { padding:8px 12px; border:1px solid rgba(255,77,77,.15); border-radius:6px; margin-bottom:6px; font-size:12px; }
+        .violation-item .v-type { font-weight:600; }
+        .violation-item .v-severity { display:inline-block; padding:1px 6px; border-radius:4px; font-size:10px; margin-left:4px; }
+        .v-severity.high { background:rgba(255,77,77,.15); color:#ff6b6b; }
+        .v-severity.medium { background:rgba(255,193,7,.15); color:#ffc107; }
+        .v-severity.low { background:rgba(255,255,255,.1); color:rgba(255,255,255,.4); }
+
+        .btn-primary, .btn-secondary, .btn-danger, .btn-sm {
+            padding:8px 20px; border:none; border-radius:6px; cursor:pointer; font-size:14px; transition:all .3s;
+        }
+        .btn-primary { background:linear-gradient(135deg,#00d2ff,#3b82f6); color:#fff; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 15px rgba(0,210,255,.3); }
+        .btn-secondary { border:1px solid rgba(0,255,255,.2); background:transparent; color:#00d2ff; }
+        .btn-secondary:hover { background:rgba(0,255,255,.05); border-color:#00d2ff; }
+        .btn-danger { background:linear-gradient(135deg,#ff6b6b,#ee5a24); color:#fff; }
+        .btn-sm { padding:5px 12px; font-size:12px; }
+
+        .form-group { margin-bottom:12px; }
+        .form-group textarea {
+            width:100%; padding:10px 14px; border:1px solid rgba(0,255,255,.15); border-radius:8px;
+            background:rgba(255,255,255,.05); color:#c8d6e5; font-size:14px; outline:none; transition:all .3s; resize:vertical; min-height:80px;
+        }
+        .form-group textarea:focus { border-color:#00d2ff; box-shadow:0 0 8px rgba(0,210,255,.15); }
+
+        .pagination { display:flex; justify-content:center; gap:8px; align-items:center; padding:12px 0; color:rgba(255,255,255,.5); font-size:13px; }
+        .pagination button { padding:4px 12px; border:1px solid rgba(0,255,255,.15); border-radius:6px; background:transparent; color:#c8d6e5; cursor:pointer; font-size:12px; }
+        .pagination button:hover { border-color:#00d2ff; }
+        .pagination button:disabled { opacity:.3; cursor:not-allowed; }
+        .pagination .page-info { padding:0 10px; }
+
+        .toast { position:fixed; top:20px; right:20px; padding:12px 24px; border-radius:8px; z-index:2000; display:none; font-size:14px; }
+        .toast.success { background:rgba(0,200,83,.9); color:#fff; display:block; }
+        .toast.error { background:rgba(255,77,77,.9); color:#fff; display:block; }
+        .empty-state { text-align:center; padding:40px 0; color:rgba(255,255,255,.3); font-size:14px; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="javascript:history.back()">&larr; 返回会话列表</a>
+
+    <div class="header-card" id="convHeader">
+        <div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);">加载中...</div>
+    </div>
+
+    <div class="layout">
+        <div class="main-area">
+            <div class="card" id="messageCard">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <h3 style="margin:0;border:none;padding:0;">消息列表</h3>
+                    <div>
+                        <button class="btn-secondary btn-sm" onclick="analyzeAll()">AI分析全部</button>
+                    </div>
+                </div>
+                <div id="msgList"><div class="empty-state">暂无消息</div></div>
+                <div id="msgPagination" class="pagination"></div>
+            </div>
+
+            <div class="card">
+                <h3>新增消息</h3>
+                <div class="form-group">
+                    <label style="font-size:13px;color:rgba(255,255,255,.6);display:block;margin-bottom:4px;">角色</label>
+                    <select id="msgRole" style="width:100%;padding:8px;border:1px solid rgba(0,255,255,.15);border-radius:8px;background:rgba(255,255,255,.05);color:#c8d6e5;outline:none;">
+                        <option value="user">用户</option>
+                        <option value="assistant">助手</option>
+                        <option value="system">系统</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <textarea id="msgContent" placeholder="输入消息内容..."></textarea>
+                </div>
+                <div style="text-align:right;">
+                    <button class="btn-primary btn-sm" onclick="addMessage()">发送</button>
+                </div>
+                <div id="addResult" style="margin-top:8px;font-size:12px;"></div>
+            </div>
+        </div>
+
+        <div class="side-area">
+            <div class="card">
+                <h3>违规监控</h3>
+                <div id="violationList" style="max-height:400px;overflow-y:auto;"><div class="empty-state">暂无违规记录</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        function escapeHtml(t){if(!t)return '';return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+        function getXsrfToken(){var c=document.cookie.split(';');for(var i=0;i<c.length;i++){var d=c[i].trim();if(d.indexOf('_xsrf=')===0)return d.substring(6);}return '';}
+        var xsrf=getXsrfToken(), convId='{{ conv_id }}', msgPage=1, vioPage=1;
+
+        function loadConv(){
+            fetch('/admin/conversation/get?id='+convId)
+            .then(function(r){return r.json();})
+            .then(function(res){
+                if(res.code!==0){document.getElementById('convHeader').innerHTML='<div style="color:#ff6b6b;">加载失败</div>';return;}
+                var c=res.data, statusLabel=c.status==='active'?'进行中':'已关闭', statusCls=c.status==='active'?'status-active':'status-closed';
+                var html='<div style="display:flex;justify-content:space-between;align-items:center;">';
+                html+='<div><h2>'+escapeHtml(c.title)+'</h2><div class="meta">'+escapeHtml(c.description||'')+' | 消息: '+(c.message_count||0)+' | 创建: '+(c.create_at||'')+'</div></div>';
+                html+='<span class="status-badge" style="padding:4px 12px;border-radius:10px;font-size:12px;background:'+(c.status==='active'?'rgba(0,200,83,.15)':'rgba(255,255,255,.1)')+';color:'+(c.status==='active'?'#5FB878':'rgba(255,255,255,.4)')+';">'+statusLabel+'</span>';
+                html+='</div>';
+                document.getElementById('convHeader').innerHTML=html;
+            });
+        }
+
+        function loadMessages(){
+            fetch('/admin/conversation/messages?conversation_id='+convId+'&page='+msgPage+'&page_size=20')
+            .then(function(r){return r.json();})
+            .then(function(data){
+                if(!data.items||data.items.length===0){
+                    document.getElementById('msgList').innerHTML='<div class="empty-state">暂无消息</div>';
+                    document.getElementById('msgPagination').innerHTML='';
+                    return;
+                }
+                var html='';
+                data.items.forEach(function(m){
+                    var roleLabel={user:'用户',assistant:'助手',system:'系统'}[m.role]||m.role;
+                    var roleCls=m.role;
+                    var analysis='';
+                    if(m.sentiment||m.topic){
+                        analysis+='<span>情感: '+(m.sentiment||'-')+'</span><span>主题: '+(m.topic||'-')+'</span>';
+                        if(m.entities){
+                            try{ var ents=typeof m.entities==='string'?JSON.parse(m.entities):m.entities; if(ents.length>0) analysis+='<span>实体: '+ents.join(', ')+'</span>'; }catch(e){}
+                        }
+                    }
+                    var violationTag = m.violation_flag ? '<span class="violation-tag">违规</span>' : '';
+                    html+='<div class="msg-item">';
+                    html+='<div class="msg-header"><span><span class="msg-role '+roleCls+'">'+roleLabel+'</span>'+violationTag+'</span><span class="msg-time">'+(m.create_at||'')+'</span></div>';
+                    html+='<div class="msg-content">'+escapeHtml(m.content)+'</div>';
+                    if(analysis) html+='<div class="msg-analysis">'+analysis+'</div>';
+                    html+='</div>';
+                });
+                document.getElementById('msgList').innerHTML=html;
+                var total=data.total||0, page=data.page||1, size=data.page_size||20, pages=Math.max(1,Math.ceil(total/size));
+                var ph='<button onclick="goMsgPage('+(msgPage-1)+')" '+(msgPage<=1?'disabled':'')+'>上一页</button>';
+                ph+='<span class="page-info">'+msgPage+'/'+pages+'</span>';
+                ph+='<button onclick="goMsgPage('+(msgPage+1)+')" '+(msgPage>=pages?'disabled':'')+'>下一页</button>';
+                document.getElementById('msgPagination').innerHTML=ph;
+            });
+        }
+
+        function goMsgPage(p){msgPage=p;loadMessages();}
+
+        function addMessage(){
+            var role=document.getElementById('msgRole').value;
+            var content=document.getElementById('msgContent').value.trim();
+            if(!content){showToast('error','请输入消息内容');return;}
+            document.getElementById('addResult').innerHTML='<span style="color:rgba(255,255,255,.3);">发送中...</span>';
+            fetch('/admin/conversation/message/add',{
+                method:'POST',
+                headers:{'Content-Type':'application/x-www-form-urlencoded'},
+                body:'conversation_id='+convId+'&role='+role+'&content='+encodeURIComponent(content)+'&_xsrf='+xsrf
+            })
+            .then(function(r){return r.json();})
+            .then(function(res){
+                if(res.code===0){
+                    document.getElementById('msgContent').value='';
+                    var resultHtml='<div style="color:#5FB878;font-size:12px;">消息已发送';
+                    if(res.analysis) resultHtml+=' | 情感:'+(res.analysis.sentiment||'-')+' 主题:'+(res.analysis.topic||'-');
+                    if(res.warning) resultHtml+=' | <span style="color:#ff6b6b;">'+escapeHtml(res.warning)+'</span>';
+                    resultHtml+='</div>';
+                    document.getElementById('addResult').innerHTML=resultHtml;
+                    loadMessages();
+                    loadViolations();
+                    loadConv();
+                } else {
+                    document.getElementById('addResult').innerHTML='<div style="color:#ff6b6b;font-size:12px;">'+escapeHtml(res.msg)+'</div>';
+                }
+            });
+        }
+
+        function analyzeAll(){
+            fetch('/admin/conversation/message/analyze_all',{
+                method:'POST',
+                headers:{'Content-Type':'application/x-www-form-urlencoded'},
+                body:'conversation_id='+convId+'&_xsrf='+xsrf
+            })
+            .then(function(r){return r.json();})
+            .then(function(res){
+                if(res.code===0){showToast('success',res.msg);loadMessages();loadViolations();}
+                else showToast('error',res.msg);
+            });
+        }
+
+        function loadViolations(){
+            fetch('/admin/conversation/violations?conversation_id='+convId+'&page='+vioPage+'&page_size=20')
+            .then(function(r){return r.json();})
+            .then(function(data){
+                if(!data.items||data.items.length===0){
+                    document.getElementById('violationList').innerHTML='<div class="empty-state">暂无违规记录</div>';
+                    return;
+                }
+                var html='';
+                data.items.forEach(function(v){
+                    var severityCls=v.severity||'low';
+                    html+='<div class="violation-item">';
+                    html+='<div><span class="v-type">'+(v.violation_type==='keyword'?'关键词违规':'技能调用违规')+'</span><span class="v-severity '+severityCls+'">'+v.severity+'</span></div>';
+                    html+='<div style="color:rgba(255,255,255,.4);margin-top:4px;">匹配: '+escapeHtml(v.matched_keyword||'')+'</div>';
+                    html+='<div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:2px;">'+(v.create_at||'')+'</div>';
+                    html+='</div>';
+                });
+                document.getElementById('violationList').innerHTML=html;
+            });
+        }
+
+        function showToast(type,msg){
+            var el=document.getElementById('toast');
+            el.className='toast '+type; el.textContent=msg; el.style.display='block';
+            setTimeout(function(){el.style.display='none';},3000);
+        }
+
+        loadConv(); loadMessages(); loadViolations();
+    </script>
+</body>
+</html>

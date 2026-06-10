@@ -6,35 +6,52 @@
     <title>{{ title }}</title>
     <link rel="stylesheet" href="{{ static_url('dist/layui/css/layui.css') }}">
     <style>
-        .perm-container { padding: 15px; display: flex; gap: 20px; }
-        .perm-left { width: 260px; background: #fff; border-radius: 4px; border: 1px solid #e6e6e6; padding: 15px; }
-        .perm-right { flex: 1; background: #fff; border-radius: 4px; border: 1px solid #e6e6e6; padding: 15px; min-height: 400px; }
-        .perm-right .feature-item { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
-        .perm-right .feature-item:hover { background: #f8f8f8; }
-        .perm-right .feature-item label { cursor: pointer; }
-        .perm-right .feature-child { padding-left: 30px; }
-        .perm-right .feature-parent { font-weight: bold; margin-top: 10px; }
-        .perm-right .feature-parent:first-child { margin-top: 0; }
+        .perm-container { padding: 15px; display: flex; gap: 20px; height: calc(100vh - 100px); }
+        .perm-left { width: 260px; background: #fff; border-radius: 4px; border: 1px solid #e6e6e6; padding: 15px; display: flex; flex-direction: column; }
+        .perm-left .role-header { font-size:15px;font-weight:bold;padding-bottom:12px;border-bottom:2px solid #3b7cff; flex-shrink: 0; }
+        .perm-left .role-list { flex:1; overflow-y:auto; margin-top:10px; }
+        .perm-left .role-item { padding:10px 14px; cursor:pointer; border-radius:6px; margin-bottom:6px; border:1px solid #e6e6e6; transition:all 0.2s; display:flex; align-items:center; justify-content:space-between; }
+        .perm-left .role-item:hover { border-color:#3b7cff; background:#f0f5ff; }
+        .perm-left .role-item.active { background:#3b7cff; color:#fff; border-color:#3b7cff; }
+        .perm-left .role-item.active .role-code { color:rgba(255,255,255,0.7); }
+        .perm-left .role-item .role-code { font-size:12px; color:#999; }
+        .perm-right { flex:1; background: #fff; border-radius: 4px; border: 1px solid #e6e6e6; padding: 20px; display: flex; flex-direction: column; min-height: 400px; }
+        .perm-right .perm-header { font-size:15px;font-weight:bold;padding-bottom:12px;border-bottom:2px solid #3b7cff; flex-shrink: 0; }
+        .perm-right .perm-body { flex:1; overflow-y:auto; margin-top:15px; }
+        .perm-right .perm-footer { border-top:1px solid #e6e6e6; padding-top:15px; text-align:center; flex-shrink:0; }
+        .feature-parent { margin-bottom:12px; background:#fafafa; border-radius:6px; padding:12px 14px; }
+        .feature-parent .parent-label { font-weight:bold; font-size:14px; display:block; margin-bottom:8px; }
+        .feature-child { padding-left:28px; display:flex; flex-wrap:wrap; gap:8px; }
+        .feature-child .feature-item { padding:4px 0; width:200px; display:flex; align-items:center; gap:6px; }
+        .feature-item-label { font-size:13px; color:#333; cursor:pointer; }
+        .feature-item-label:hover { color:#3b7cff; }
+        .perm-placeholder { text-align:center; padding:60px 20px; color:#bbb; }
+        .perm-placeholder .layui-icon { font-size:48px; }
+        .perm-placeholder p { margin-top:10px; font-size:14px; }
+        .perm-select-tip { text-align:center; padding:30px; color:#999; font-size:14px; }
     </style>
 </head>
 <body>
     <div class="perm-container">
         <!-- 左侧角色列表 -->
         <div class="perm-left">
-            <div style="font-size:15px;font-weight:bold;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #3b7cff;">
-                <i class="layui-icon layui-icon-auz"></i> 选择角色
-            </div>
-            <div id="roleList"></div>
+            <div class="role-header"><i class="layui-icon layui-icon-auz"></i> 选择角色</div>
+            <div class="role-list" id="roleList"></div>
         </div>
         <!-- 右侧权限树 -->
         <div class="perm-right">
-            <div style="font-size:15px;font-weight:bold;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #3b7cff;">
+            <div class="perm-header">
                 <i class="layui-icon layui-icon-password"></i> 功能权限
                 <span id="currentRoleName" style="font-weight:normal;font-size:13px;color:#999;margin-left:10px;"></span>
             </div>
-            <div id="featureTree"></div>
-            <div style="margin-top:15px;padding-top:15px;border-top:1px solid #e6e6e6;text-align:center;">
-                <button class="layui-btn layui-btn-sm" id="btnSavePerm" disabled>
+            <div class="perm-body" id="featureTree">
+                <div class="perm-placeholder">
+                    <i class="layui-icon layui-icon-face-smile"></i>
+                    <p>请从左侧选择一个角色，查看并编辑其权限</p>
+                </div>
+            </div>
+            <div class="perm-footer">
+                <button class="layui-btn" id="btnSavePerm" disabled>
                     <i class="layui-icon layui-icon-ok"></i> 保存权限
                 </button>
             </div>
@@ -63,56 +80,82 @@
             $.getJSON('/admin/permission/role_list', function(roles){
                 var html = '';
                 $.each(roles, function(i, r){
-                    html += '<div class="role-item" data-id="' + r.id + '" style="padding:8px 12px;cursor:pointer;border-radius:4px;margin-bottom:4px;">';
-                    html += '<i class="layui-icon layui-icon-user"></i> ' + r.name;
-                    html += '<span style="float:right;color:#999;font-size:12px;">' + r.code + '</span></div>';
+                    var activeClass = (i === 0) ? ' active' : '';
+                    html += '<div class="role-item' + activeClass + '" data-id="' + r.id + '">';
+                    html += '<span><i class="layui-icon layui-icon-user"></i> ' + r.name + '</span>';
+                    html += '<span class="role-code">' + r.code + '</span></div>';
                 });
                 $('#roleList').html(html);
 
                 // 点击选择角色
                 $('.role-item').on('click', function(){
-                    $('.role-item').css({background:'', color:''});
-                    $(this).css({background:'#3b7cff', color:'#fff'});
+                    $('.role-item').removeClass('active');
+                    $(this).addClass('active');
                     selectedRoleId = $(this).data('id');
-                    var roleName = $(this).text().trim();
-                    $('#currentRoleName').text('（' + roleName.split(' ')[0] + '）');
+                    var roleName = $(this).find('span:first').text().trim();
+                    $('#currentRoleName').text('（' + roleName + '）');
                     $('#btnSavePerm').removeAttr('disabled');
                     loadFeatureTree(selectedRoleId);
                 });
+
+                // 自动选中第一个角色并加载权限
+                if (roles.length > 0) {
+                    $('.role-item:first').trigger('click');
+                }
             });
 
             // 加载功能树
             function loadFeatureTree(roleId){
                 $.getJSON('/admin/permission/feature_tree?role_id=' + roleId, function(tree){
                     var html = '';
-                    $.each(tree, function(i, parent){
-                        html += '<div class="feature-parent">';
-                        html += '<label><input type="checkbox" lay-filter="parentChk" data-id="' + parent.id + '"';
-                        var allChecked = true;
-                        $.each(parent.children, function(j, child){
-                            if(!child.checked) allChecked = false;
-                        });
-                        if(allChecked && parent.children.length > 0) html += ' checked';
-                        html += ' lay-skin="primary"> <span>' + parent.name + '</span></label>';
-                        html += '<div class="feature-child">';
-                        $.each(parent.children, function(j, child){
-                            html += '<div class="feature-item">';
-                            html += '<label><input type="checkbox" name="feature_ids" value="' + child.id + '" lay-skin="primary"';
-                            if(child.checked) html += ' checked';
-                            html += '> ' + child.name + '</label>';
-                            html += '</div>';
-                        });
-                        html += '</div></div>';
-                    });
-                    if(tree.length === 0){
-                        html = '<div style="color:#999;text-align:center;padding:40px 0;">请先到功能管理添加功能模块</div>';
+                    if (tree.length === 0) {
+                        html = '<div class="perm-placeholder"><i class="layui-icon layui-icon-set"></i><p>暂无可分配的功能模块<br><span style="font-size:12px;">请先到功能管理添加功能</span></p></div>';
+                        $('#featureTree').html(html);
+                        return;
                     }
+                    $.each(tree, function(i, item){
+                        if (item.leaf) {
+                            // 叶子节点 — 单个可选功能
+                            html += '<div class="feature-parent">';
+                            html += '<div class="feature-item">';
+                            html += '<input type="checkbox" name="feature_ids" value="' + item.id + '" lay-skin="primary"';
+                            if (item.checked) html += ' checked';
+                            html += '>';
+                            html += '<span class="feature-item-label">' + item.name + '</span>';
+                            html += '</div></div>';
+                        } else {
+                            // 父节点 + 子节点
+                            html += '<div class="feature-parent">';
+                            html += '<label class="parent-label"><input type="checkbox" lay-filter="parentChk" data-id="' + item.id + '"';
+                            var allChecked = true;
+                            $.each(item.children || [], function(j, child){
+                                if(!child.checked) allChecked = false;
+                            });
+                            if(allChecked && item.children && item.children.length > 0) html += ' checked';
+                            html += ' lay-skin="primary"> ' + item.name + '</label>';
+                            if (item.children && item.children.length > 0) {
+                                html += '<div class="feature-child">';
+                                $.each(item.children, function(j, child){
+                                    html += '<div class="feature-item">';
+                                    html += '<input type="checkbox" name="feature_ids" value="' + child.id + '" lay-skin="primary"';
+                                    if(child.checked) html += ' checked';
+                                    html += '>';
+                                    html += '<span class="feature-item-label">' + child.name + '</span>';
+                                    html += '</div>';
+                                });
+                                html += '</div>';
+                            }
+                            html += '</div>';
+                        }
+                    });
                     $('#featureTree').html(html);
                     form.render('checkbox');
+                }).fail(function(){
+                    $('#featureTree').html('<div class="perm-placeholder"><i class="layui-icon layui-icon-face-cry"></i><p>加载权限树失败</p></div>');
                 });
             }
 
-            // 全选/取消
+            // 全选/取消父级
             $(document).on('change', 'input[lay-filter="parentChk"]', function(){
                 var checked = $(this).prop('checked');
                 $(this).closest('.feature-parent').find('input[name="feature_ids"]').prop('checked', checked);
@@ -125,8 +168,18 @@
                 var all = parent.find('input[name="feature_ids"]');
                 var checked = parent.find('input[name="feature_ids"]:checked');
                 var parentChk = parent.find('input[lay-filter="parentChk"]');
-                parentChk.prop('checked', all.length === checked.length);
+                if (parentChk.length > 0) {
+                    parentChk.prop('checked', all.length > 0 && all.length === checked.length);
+                    form.render('checkbox');
+                }
+            });
+
+            // 点击权限名称时切换checkbox状态
+            $(document).on('click', '.feature-item-label', function(){
+                var checkbox = $(this).prev('input[type="checkbox"]');
+                checkbox.prop('checked', !checkbox.prop('checked'));
                 form.render('checkbox');
+                checkbox.trigger('change');
             });
 
             // 保存权限

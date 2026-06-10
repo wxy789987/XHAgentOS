@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ static_url('dist/layui/css/layui.css') }}">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:#0a0e1a; color:#c8d6e5; min-height:100vh; padding:30px; }
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-track { background:#0a0e1a; }
+        ::-webkit-scrollbar-thumb { background:#2d3a6e; border-radius:3px; }
+
+        .back-link { display:inline-block; margin-bottom:20px; color:#00d2ff; text-decoration:none; font-size:14px; }
+        .back-link:hover { color:#a855f7; }
+
+        .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .page-header h1 { font-size:24px; font-weight:700; background:linear-gradient(135deg,#00d2ff,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+        .card {
+            background: linear-gradient(135deg,rgba(15,23,58,.8),rgba(30,27,75,.8));
+            border:1px solid rgba(0,255,255,.1); border-radius:16px; padding:24px; margin-bottom:20px;
+        }
+
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:20px; }
+        .stat-item { text-align:center; padding:20px; background:rgba(0,0,0,.2); border-radius:12px; }
+        .stat-item .num { font-size:32px; font-weight:700; }
+        .stat-item .label { font-size:13px; color:rgba(255,255,255,.4); margin-top:4px; }
+        .stat-item.high .num { color:#ff6b6b; }
+        .stat-item.medium .num { color:#ffc107; }
+        .stat-item.low .num { color:rgba(255,255,255,.5); }
+
+        .filter-bar { display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+        .filter-bar select { padding:8px 14px; border:1px solid rgba(0,255,255,.15); border-radius:6px; background:rgba(255,255,255,.05); color:#c8d6e5; font-size:14px; outline:none; }
+
+        .vio-table { width:100%; border-collapse:collapse; }
+        .vio-table th, .vio-table td { padding:12px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,.05); font-size:13px; }
+        .vio-table th { color:rgba(255,255,255,.4); font-weight:500; background:rgba(255,255,255,.02); }
+        .vio-table td { color:#e2e8f0; }
+        .vio-table tr:hover td { background:rgba(0,210,255,.03); }
+
+        .severity-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; }
+        .severity-high { background:rgba(255,77,77,.15); color:#ff6b6b; }
+        .severity-medium { background:rgba(255,193,7,.15); color:#ffc107; }
+        .severity-low { background:rgba(255,255,255,.1); color:rgba(255,255,255,.4); }
+
+        .status-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; }
+        .status-pending { background:rgba(255,193,7,.15); color:#ffc107; }
+        .status-resolved { background:rgba(0,200,83,.15); color:#5FB878; }
+
+        .btn-primary, .btn-secondary, .btn-danger, .btn-sm {
+            padding:8px 20px; border:none; border-radius:6px; cursor:pointer; font-size:14px; transition:all .3s;
+        }
+        .btn-primary { background:linear-gradient(135deg,#00d2ff,#3b82f6); color:#fff; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 15px rgba(0,210,255,.3); }
+        .btn-secondary { border:1px solid rgba(0,255,255,.2); background:transparent; color:#00d2ff; }
+        .btn-secondary:hover { background:rgba(0,255,255,.05); border-color:#00d2ff; }
+        .btn-danger { background:linear-gradient(135deg,#ff6b6b,#ee5a24); color:#fff; }
+        .btn-sm { padding:5px 12px; font-size:12px; }
+
+        .pagination { display:flex; justify-content:center; gap:8px; align-items:center; padding:20px 0; color:rgba(255,255,255,.5); font-size:13px; }
+        .pagination button { padding:6px 14px; border:1px solid rgba(0,255,255,.15); border-radius:6px; background:transparent; color:#c8d6e5; cursor:pointer; }
+        .pagination button:hover { border-color:#00d2ff; }
+        .pagination button:disabled { opacity:.3; cursor:not-allowed; }
+        .pagination .page-info { padding:0 10px; }
+        .toast { position:fixed; top:20px; right:20px; padding:12px 24px; border-radius:8px; z-index:2000; display:none; font-size:14px; }
+        .toast.success { background:rgba(0,200,83,.9); color:#fff; display:block; }
+        .toast.error { background:rgba(255,77,77,.9); color:#fff; display:block; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="javascript:history.back()">&larr; 返回会话管理</a>
+    <div class="page-header">
+        <h1>违规监控</h1>
+        <div>
+            <button class="btn-primary btn-sm" onclick="scanAll()">全量扫描</button>
+        </div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="card">
+        <div class="filter-bar">
+            <select id="fSeverity" onchange="doSearch()">
+                <option value="">全部级别</option>
+                <option value="high">高危</option>
+                <option value="medium">中危</option>
+                <option value="low">低危</option>
+            </select>
+            <select id="fStatus" onchange="doSearch()">
+                <option value="">全部状态</option>
+                <option value="pending">待处理</option>
+                <option value="resolved">已处理</option>
+            </select>
+        </div>
+        <table class="vio-table">
+            <thead><tr><th>ID</th><th>会话</th><th>类型</th><th>匹配内容</th><th>级别</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+            <tbody id="vioTbody"></tbody>
+        </table>
+        <div id="pagination" class="pagination"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script>
+        function escapeHtml(t){if(!t)return '';return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+        function getXsrfToken(){var c=document.cookie.split(';');for(var i=0;i<c.length;i++){var d=c[i].trim();if(d.indexOf('_xsrf=')===0)return d.substring(6);}return '';}
+        var xsrf=getXsrfToken(), currentPage=1;
+
+        function doSearch(){currentPage=1;loadViolations();}
+
+        function loadViolations(){
+            var severity=document.getElementById('fSeverity').value;
+            fetch('/admin/conversation/violations?page='+currentPage+'&page_size=20&severity='+severity)
+            .then(function(r){return r.json();})
+            .then(function(data){
+                var html='';
+                if(data.items&&data.items.length>0){
+                    data.items.forEach(function(v){
+                        var typeLabel=v.violation_type==='keyword'?'关键词违规':'技能调用违规';
+                        var sevCls='severity-'+v.severity;
+                        var sevLabel={high:'高危',medium:'中危',low:'低危'}[v.severity]||v.severity;
+                        var statCls='status-'+v.status;
+                        var statLabel=v.status==='pending'?'待处理':'已处理';
+                        html+='<tr>';
+                        html+='<td>'+v.id+'</td>';
+                        html+='<td><a href="/admin/conversation/detail?id='+v.conversation_id+'" target="_blank" style="color:#00d2ff;text-decoration:none;">'+escapeHtml(v.conversation_title||'会话'+v.conversation_id)+'</a></td>';
+                        html+='<td>'+typeLabel+'</td>';
+                        html+='<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(v.matched_keyword||'')+'</td>';
+                        html+='<td><span class="severity-badge '+sevCls+'">'+sevLabel+'</span></td>';
+                        html+='<td><span class="status-badge '+statCls+'">'+statLabel+'</span></td>';
+                        html+='<td style="font-size:12px;color:rgba(255,255,255,.4);">'+(v.create_at||'')+'</td>';
+                        html+='<td>';
+                        if(v.status==='pending') html+='<button class="btn-secondary btn-sm" onclick="resolveViolation('+v.id+')">标记处理</button>';
+                        else html+='<span style="color:rgba(255,255,255,.3);font-size:12px;">已处理</span>';
+                        html+='</td></tr>';
+                    });
+                } else {
+                    html='<tr><td colspan="8" style="text-align:center;padding:40px;color:rgba(255,255,255,.3);">暂无违规记录</td></tr>';
+                }
+                document.getElementById('vioTbody').innerHTML=html;
+                renderPagination(data);
+            });
+        }
+
+        function renderPagination(data){
+            var total=data.total||0, page=data.page||1, size=data.page_size||20, pages=Math.max(1,Math.ceil(total/size));
+            var html='<button onclick="goPage('+(page-1)+')" '+(page<=1?'disabled':'')+'>上一页</button>';
+            html+='<span class="page-info">'+page+'/'+pages+'</span>';
+            html+='<button onclick="goPage('+(page+1)+')" '+(page>=pages?'disabled':'')+'>下一页</button>';
+            document.getElementById('pagination').innerHTML=html;
+        }
+        function goPage(p){currentPage=p;loadViolations();}
+
+        function resolveViolation(id){
+            fetch('/admin/conversation/violation/update',{
+                method:'POST',
+                headers:{'Content-Type':'application/x-www-form-urlencoded'},
+                body:'id='+id+'&status=resolved&_xsrf='+xsrf
+            })
+            .then(function(r){return r.json();})
+            .then(function(res){
+                if(res.code===0){showToast('success','已标记为已处理');loadViolations();loadStats();}
+                else showToast('error',res.msg);
+            });
+        }
+
+        function scanAll(){
+            if(!confirm('确定要全量扫描所有会话进行违规检测吗？')) return;
+            fetch('/admin/conversation/check_all',{
+                method:'POST',
+                headers:{'Content-Type':'application/x-www-form-urlencoded'},
+                body:'_xsrf='+xsrf
+            })
+            .then(function(r){return r.json();})
+            .then(function(res){
+                if(res.code===0){showToast('success',res.msg);loadViolations();loadStats();}
+                else showToast('error',res.msg);
+            });
+        }
+
+        function loadStats(){
+            fetch('/admin/conversation/violations?page=1&page_size=1')
+            .then(function(r){return r.json();})
+            .then(function(data){
+                var total=data.total||0;
+                var html='';
+                html+='<div class="stat-item high"><div class="num">'+total+'</div><div class="label">违规记录总数</div></div>';
+                document.getElementById('statsGrid').innerHTML=html;
+            });
+        }
+
+        function showToast(type,msg){
+            var el=document.getElementById('toast');
+            el.className='toast '+type; el.textContent=msg; el.style.display='block';
+            setTimeout(function(){el.style.display='none';},3000);
+        }
+        loadStats(); loadViolations();
+    </script>
+</body>
+</html>

@@ -31,9 +31,9 @@ class PermissionFeatureTreeHandler(BaseHandler):
         role_id = int(self.get_argument("role_id", 0))
         all_features = FeatureRepository.get_all()
         if role_id > 0:
-            checked_ids = PermissionRepository.get_permissions_by_role(role_id)
+            checked_ids = set(PermissionRepository.get_permissions_by_role(role_id))
         else:
-            checked_ids = []
+            checked_ids = set()
 
         parents = [f for f in all_features if f["parent_id"] == 0]
         tree = []
@@ -47,12 +47,23 @@ class PermissionFeatureTreeHandler(BaseHandler):
                         "code": f["code"],
                         "checked": f["id"] in checked_ids,
                     })
-            tree.append({
-                "id": p["id"],
-                "name": p["name"],
-                "code": p["code"],
-                "children": children,
-            })
+            # 如果没有子节点，父节点本身作为可选功能
+            if not children:
+                tree.append({
+                    "id": p["id"],
+                    "name": p["name"],
+                    "code": p["code"],
+                    "checked": p["id"] in checked_ids,
+                    "leaf": True,
+                })
+            else:
+                tree.append({
+                    "id": p["id"],
+                    "name": p["name"],
+                    "code": p["code"],
+                    "children": children,
+                    "leaf": False,
+                })
         self.set_header("Content-Type", "application/json")
         self.write(json.dumps(tree, ensure_ascii=False, default=str))
 

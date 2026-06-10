@@ -12,15 +12,15 @@ def _hash_password(password: str, salt: bytes) -> str:
 
 class UserRepository:
 	@staticmethod
-	def create_user(username: str, password: str) -> bool:
-		"""创建用户，成功返回 True，用户名重复返回 False"""
+	def create_user(username: str, password: str, role_id: int = 2) -> bool:
+		"""创建用户，成功返回 True，用户名重复返回 False。默认角色为普通用户(role_id=2)"""
 		salt = secrets.token_bytes(16)
 		password_hash = _hash_password(password, salt)
 		try:
 			with get_connection() as conn:
 				conn.execute(
-					"INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)",
-					(username, password_hash, salt.hex()),
+					"INSERT INTO users (username, password_hash, salt, role_id) VALUES (?, ?, ?, ?)",
+					(username, password_hash, salt.hex(), role_id),
 				)
 			return True
 		except sqlite3.IntegrityError:
@@ -30,7 +30,7 @@ class UserRepository:
 	def get_user_by_username(username: str):
 		with get_connection() as conn:
 			row = conn.execute(
-				"SELECT id, username, password_hash, salt, create_at FROM users WHERE username = ?",
+				"SELECT id, username, password_hash, salt, role_id, create_at FROM users WHERE username = ?",
 				(username,),
 			).fetchone()
 			return row
@@ -39,7 +39,7 @@ class UserRepository:
 	def get_user_by_id(user_id: int):
 		with get_connection() as conn:
 			row = conn.execute(
-				"SELECT id, username, create_at FROM users WHERE id = ?",
+				"SELECT u.id, u.username, u.role_id, u.create_at FROM users u WHERE u.id = ?",
 				(user_id,),
 			).fetchone()
 			return row
@@ -58,15 +58,17 @@ class UserRepository:
 		offset = (page - 1) * page_size
 		with get_connection() as conn:
 			rows = conn.execute(
-				"SELECT id, username, create_at FROM users ORDER BY id DESC LIMIT ? OFFSET ?",
+				"SELECT u.id, u.username, u.role_id, u.create_at, COALESCE(r.name, '') AS role_name "
+				"FROM users u LEFT JOIN roles r ON u.role_id = r.id "
+				"ORDER BY u.id DESC LIMIT ? OFFSET ?",
 				(page_size, offset),
 			).fetchall()
 			total = conn.execute("SELECT COUNT(*) AS cnt FROM users").fetchone()["cnt"]
 		return rows, total
 
 	@staticmethod
-	def update_user(user_id: int, username: str = None, password: str = None) -> bool:
-		"""更新用户信息，至少提供 username 或 password 之一"""
+	def update_user(user_id: int, username: str = None, password: str = None, role_id: int = None) -> bool:
+		"""更新用户信息，至少提供 username 或 password 或 role_id 之一"""
 		with get_connection() as conn:
 			if password:
 				salt = secrets.token_bytes(16)
@@ -83,6 +85,11 @@ class UserRepository:
 					)
 				except sqlite3.IntegrityError:
 					return False
+			if role_id is not None:
+				conn.execute(
+					"UPDATE users SET role_id=? WHERE id=?",
+					(role_id, user_id),
+				)
 		return True
 
 	@staticmethod

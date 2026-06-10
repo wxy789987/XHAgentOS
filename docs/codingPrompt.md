@@ -265,6 +265,62 @@ sec-ch-ua-platform: "Windows"
 -修复数智大屏模块的问题，
 echarts.min.js:45 Uncaught TypeError: Cannot read properties of undefined (reading 'scale'),这是图表崩溃的真正原因,ECharts 在初始化时找不到 DOM 容器，或者容器还没加载完就渲染。
 
+任务14.2：
+发现问题，检查代码，优化功能
+-修复数智大屏模块的问题，
+-控制台错误:
+16
+Tracking Prevention blocked access to storage for <URL>.
+echarts.min.js:45
+ Uncaught TypeError: Cannot read properties of undefined (reading 'scale')
+[新] 使用 Edge 中的 Copilot 来解释控制台错误: 单击 
+ 以说明错误。了解更多信息
+
+任务14.3：
+发现问题，检查代码，优化功能
+-修复数智大屏模块的问题，
+-控制台错误:
+Uncaught TypeError: Cannot read properties of undefined (reading 'scale')
+    at t.<anonymous> (echarts-gl.min.js?v=d6a7986d10333900860e9afaaa191bd6d1df86549caed8cb8b237b14abeba0c4549fd8504088bf45c03d8bc52b04ddb75f3df567f601ecf0bf7e49146a2d1e6e:1:495939)
+    at t.each (echarts.min.js?v=937ef041c578bf687a8e061fe48533d4ca1228fa43b3adf45c64a609a082397c72d9ac200162871995abf673321a093720ec40d4dc5d90df2bd491e0914b4ca1:45:148510)
+    at t.each (echarts.min.js?v=937ef041c578bf687a8e061fe48533d4ca1228fa43b3adf45c64a609a082397c72d9ac200162871995abf673321a093720ec40d4dc5d90df2bd491e0914b4ca1:45:235393)
+    at echarts-gl.min.js?v=d6a7986d10333900860e9afaaa191bd6d1df86549caed8cb8b237b14abeba0c4549fd8504088bf45c03d8bc52b04ddb75f3df567f601ecf0bf7e49146a2d1e6e:1:495853
+    at echarts-gl.min.js?v=d6a7986d10333900860e9afaaa191bd6d1df86549caed8cb8b237b14abeba0c4549fd8504088bf45c03d8bc52b04ddb75f3df567f601ecf0bf7e49146a2d1e6e:1:496172
+    at e.<anonymous> (echarts.min.js?v=937ef041c578bf687a8e061fe48533d4ca1228fa43b3adf45c64a609a082397c72d9ac200162871995abf673321a093720ec40d4dc5d90df2bd491e0914b4ca1:45:116987)
+    at Array.forEach (<anonymous>)
+    at E (echarts.min.js?v=937ef041c578bf687a8e061fe48533d4ca1228fa43b3adf45c64a609a082397c72d9ac200162871995abf673321a093720ec40d4dc5d90df2bd491e0914b4ca1:35:5100)
+    at e.eachSeriesByType (echarts.min.js?v=937ef041c578bf687a8e061fe48533d4ca1228fa43b3adf45c64a609a082397c72d9ac200162871995abf673321a093720ec40d4dc5d90df2bd491e0914b4ca1:45:116892)
+    at Object.overallReset (echarts-gl.min.js?v=d6a7986d10333900860e9afaaa191bd6d1df86549caed8cb8b237b14abeba0c4549fd8504088bf45c03d8bc52b04ddb75f3df567f601ecf0bf7e49146a2d1e6e:1:495459)
+
+任务14.4：
+发现问题，检查代码，优化功能
+-修复数智大屏模块的问题，3D地球很难看而且,没有正确的大陆板块显示,业务点在3D地球上的位置也不正确,都在地球外面了。
+
+任务14.5：
+发现问题，检查代码，优化功能
+-修复数智大屏模块的问题，3D地球渲染失败，请检查WebGL支持。
+
+任务14.6：
+发现问题，检查代码，优化功能
+-修复数智大屏模块的问题:3D 地球渲染失败: Cannot read properties of undefined (reading 'getProgressive')。
+
+任务14.7：
+发现问题，检查代码，优化功能
+-修复数智大屏模块的问题，3D地球没有正确的大陆板块显示,业务点在3D地球上的位置也不正确,都在地球外面。
+
+任务14.8：
+发现问题，检查代码，优化功能
+-修复数智大屏模块的问题:散点怎么都去左上角了。
+
+任务14.9：
+发现问题，检查代码，优化功能
+-修复数智大屏模块的问题:地球散点(加厚的业务地区)没有显示在地球上,需要调整散点的位置,使它们在地球上正确显示。最好标出全球关键城市的散点,如北京、上海、广州、深圳等。
+-根据我给的例图修改完善现在的地球模型.
+
+任务14.10：
+发现问题，检查代码，优化功能
+-修复数智大屏模块的问题:六大洲使用不同颜色区分使用的点更加密集让显示更加清晰明确。
+-地球外部还是有很多蓝色的点,需要调整这些点的位置,使它们在地球上正确显示,而不是地球上方。
 
 
 任务15:系统设置
@@ -273,6 +329,57 @@ echarts.min.js:45 Uncaught TypeError: Cannot read properties of undefined (readi
 -支持对系统进行日志查看。
 -支持对系统进行性能监控。
 -支持对系统进行日志分析。
+
+任务15.1：
+发现问题，检查代码，优化功能
+-修复报错系统管理模块下的系统配置模块:
+Traceback (most recent call last):
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\web.py", line 1878, in _execute
+    result = method(*self.path_args, **self.path_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\web.py", line 3409, in wrapper
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\20260601XHUA\day3\XHAgentOS\app\controllers\settings.py", line 34, in get
+    self.render("settings_config.html", title="系统配置", db_info=db_info, models=models)
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\web.py", line 1025, in render
+    html = self.render_string(template_name, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\web.py", line 1171, in render_string
+    t = loader.load(template_name)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\template.py", line 446, in load
+    self.templates[name] = self._create_template(name)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\template.py", line 477, in _create_template
+    template = Template(f.read(), name=name, loader=self)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\template.py", line 318, in __init__
+    self.file = _File(self, _parse(reader, self))
+                            ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\template.py", line 1021, in _parse
+    block_body = _parse(reader, template, operator, in_loop)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\template.py", line 1015, in _parse
+    block_body = _parse(reader, template, operator, operator)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\template.py", line 1021, in _parse
+    block_body = _parse(reader, template, operator, in_loop)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\template.py", line 1045, in _parse
+    reader.raise_parse_error("unknown operator: %r" % operator)
+  File "C:\Users\39737\AppData\Local\Programs\Python\Python311\Lib\site-packages\tornado\template.py", line 838, in raise_parse_error
+    raise ParseError(msg, self.name, self.line)
+tornado.template.ParseError: unknown operator: 'endif' at settings_config.html:62
+
+
+任务15.2：
+发现问题，检查代码，优化功能
+-系统管理模块下的子模块点击查看后都是一片空白,需要修复。
+
+任务15.3：
+完善系统管理下的子模块"日志分析",对数据加入图表展示。
+
 
 
 任务16:对话功能
@@ -283,6 +390,27 @@ echarts.min.js:45 Uncaught TypeError: Cannot read properties of undefined (readi
 -支持用户与数字员工进行对话记录的查看。
 -支持用户与数字员工进行对话记录的导出。
 -支持用户与数字员工进行对话记录的分析。
+
+任务16.1：
+-用户侧功能模块应该是要通过登录/注册然后进入相应网页,才能进行对话。是XHAgentOS的用户前台。
+-注册时只需提供用户名和密码,无需提供其他信息,不过注册只能注册普通用户
+-在登录界面进行登录时提供角色选择(角色根据XHAgentOS · 管理后台的角色管理模块进行配置),用户根据角色进行登录,登录后根据角色进行不同的判断让他们进入不同的网页进行后续操作。
+
+任务16.2：
+发现问题，检查代码，优化功能
+-用户侧没有添加用户功能,没有创建群组功能。
+-用户侧的数字员工请求失败,403错误,需要修复。
+-管理侧数字员工模块,添加数字员工功能,添加后页面没有看见,也不知道是否可用,需要修复。
+-用户侧没有添加数字员工功能,需要修复。(用户侧添加数字员工应该是在已有数字员工列表中选择,而不是自己创建,自己创建的数字员工,需要在管理侧进行添加,才能在用户侧使用。)
+
+任务16.3：
+发现问题，检查代码，优化功能
+-管理侧数字员工模块,添加数字员工功能,添加后页面没有看见,但是应该是有的因为在用户侧能看见
+-用户侧调用数字员工功能,需要修复:进行对话时报错:错误: OpenAI SDK未安装。
+
+任务16.4：
+发现问题，检查代码，优化功能
+-修复问题:用户侧需要能够添加好友和数字员工到建的群里面进行群对话的功能,需要修复。
 
 任务17:问数功能
 继续完成用户侧-问数功能模块的功能

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ static_url('dist/layui/css/layui.css') }}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #0a0e1a;
+            color: #c8d6e5;
+            min-height: 100vh; padding: 30px;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0e1a; }
+        ::-webkit-scrollbar-thumb { background: #2d3a6e; border-radius: 3px; }
+
+        .back-link {
+            display: inline-block; margin-bottom: 20px; color: #00d2ff; text-decoration: none;
+            font-size: 14px; transition: color .3s;
+        }
+        .back-link:hover { color: #a855f7; }
+
+        .detail-card {
+            background: linear-gradient(135deg, rgba(15,23,58,.8), rgba(30,27,75,.8));
+            border: 1px solid rgba(0,255,255,.1); border-radius: 16px; padding: 30px; margin-bottom: 24px;
+        }
+        .detail-card h2 { font-size: 22px; color: #e2e8f0; margin-bottom: 16px; }
+
+        .emp-header {
+            display: flex; align-items: center; gap: 16px; margin-bottom: 20px;
+        }
+        .emp-avatar {
+            width: 56px; height: 56px; border-radius: 14px;
+            background: linear-gradient(135deg, #00d2ff, #a855f7);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: #fff; flex-shrink: 0;
+        }
+
+        .info-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;
+        }
+        .info-item label { display: block; font-size: 12px; color: rgba(255,255,255,.4); margin-bottom: 4px; }
+        .info-item .value { font-size: 14px; color: #e2e8f0; }
+
+        .section-title {
+            font-size: 16px; font-weight: 600; color: #00d2ff;
+            margin: 24px 0 12px 0; padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0,255,255,.1);
+        }
+
+        .code-block {
+            background: rgba(0,0,0,.4); border-radius: 8px; padding: 16px;
+            overflow-x: auto; margin: 8px 0;
+        }
+        .code-block pre {
+            font-size: 13px; color: #00d2ff; white-space: pre-wrap; word-break: break-all;
+            font-family: 'Cascadia Code', 'Fira Code', monospace; line-height: 1.6;
+        }
+
+        .skill-tag {
+            display: inline-block; padding: 4px 12px; margin: 3px;
+            border: 1px solid rgba(0,210,255,.2); border-radius: 6px;
+            background: rgba(0,210,255,.05); color: #00d2ff; font-size: 12px;
+        }
+        .skill-tag .st-type { color: rgba(255,255,255,.35); font-size: 11px; }
+
+        .log-item {
+            padding: 12px 16px; border: 1px solid rgba(255,255,255,.05); border-radius: 8px;
+            margin-bottom: 8px; transition: all .3s;
+        }
+        .log-item:hover { border-color: rgba(0,210,255,.15); }
+        .log-item .log-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+        }
+        .log-item .log-status {
+            padding: 2px 8px; border-radius: 6px; font-size: 11px;
+        }
+        .log-status.success { background: rgba(0,200,83,.15); color: #5FB878; }
+        .log-status.failed { background: rgba(255,77,77,.15); color: #ff6b6b; }
+        .log-item .log-body { font-size: 12px; color: rgba(255,255,255,.5); }
+
+        .btn-primary {
+            padding: 8px 20px; border: none; border-radius: 6px;
+            background: linear-gradient(135deg, #00d2ff, #3b82f6);
+            color: #fff; cursor: pointer; font-size: 14px; transition: all .3s;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(0,210,255,.3); }
+        .btn-secondary {
+            padding: 8px 20px; border: 1px solid rgba(0,255,255,.2); border-radius: 6px;
+            background: transparent; color: #00d2ff; cursor: pointer; font-size: 14px;
+        }
+        .btn-secondary:hover { background: rgba(0,255,255,.05); }
+
+        .empty-state { text-align: center; padding: 40px 0; color: rgba(255,255,255,.3); font-size: 14px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 12px; }
+        .badge-active { background: rgba(0,200,83,.15); color: #5FB878; }
+        .badge-inactive { background: rgba(255,77,77,.15); color: #ff6b6b; }
+
+        .toast {
+            position: fixed; top: 20px; right: 20px; padding: 12px 24px; border-radius: 8px;
+            z-index: 2000; display: none; font-size: 14px;
+        }
+        .toast.success { background: rgba(0,200,83,.9); color: #fff; display: block; }
+        .toast.error { background: rgba(255,77,77,.9); color: #fff; display: block; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="javascript:void(0)" onclick="window.close()">&larr; 返回数字员工列表</a>
+
+    <div id="empInfo" class="detail-card">
+        <div style="text-align:center;padding:40px;color:rgba(255,255,255,.3);">加载中...</div>
+    </div>
+
+    <div class="detail-card" id="logsSection">
+        <h2>调用记录</h2>
+        <div id="callLogs"><div class="empty-state">暂无调用记录</div></div>
+        <div id="logPagination" style="text-align:center;padding:12px 0;"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        function escapeHtml(t){
+            if(!t) return '';
+            return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        var empId = '{{ employee_id }}';
+        var logPage = 1;
+
+        function loadEmployee(){
+            fetch('/admin/employee/get?id=' + empId)
+                .then(function(r){ return r.json(); })
+                .then(function(res){
+                    if(res.code !== 0) {
+                        document.getElementById('empInfo').innerHTML = '<div style="color:#ff6b6b;">加载失败: ' + escapeHtml(res.msg) + '</div>';
+                        return;
+                    }
+                    var e = res.data;
+                    var statusLabel = e.is_active ? '启用' : '停用';
+                    var statusCls = e.is_active ? 'badge-active' : 'badge-inactive';
+
+                    var html = '';
+                    html += '<div class="emp-header">';
+                    html += '<div class="emp-avatar">' + escapeHtml((e.name || 'E').charAt(0).toUpperCase()) + '</div>';
+                    html += '<div><h2 style="margin:0;">' + escapeHtml(e.name) + '</h2>';
+                    html += '<span class="badge ' + statusCls + '">' + statusLabel + '</span></div>';
+                    html += '</div>';
+
+                    html += '<div class="info-grid">';
+                    html += '<div class="info-item"><label>AI模型</label><div class="value">' + escapeHtml(e.model_name || '未选择') + '</div></div>';
+                    html += '<div class="info-item"><label>关联技能数</label><div class="value">' + (e.skill_ids ? e.skill_ids.length : 0) + ' 个</div></div>';
+                    html += '<div class="info-item"><label>创建时间</label><div class="value">' + (e.create_at || '-') + '</div></div>';
+                    html += '<div class="info-item"><label>更新时间</label><div class="value">' + (e.update_at || '-') + '</div></div>';
+                    html += '</div>';
+
+                    if(e.description){
+                        html += '<div class="section-title">描述</div>';
+                        html += '<p style="color:rgba(255,255,255,.6);line-height:1.8;">' + escapeHtml(e.description) + '</p>';
+                    }
+
+                    if(e.skill_ids && e.skill_ids.length > 0){
+                        html += '<div class="section-title">关联技能</div>';
+                        html += '<div>';
+                        e.skill_ids.forEach(function(sid){
+                            html += '<span class="skill-tag">技能ID: ' + sid + '</span>';
+                        });
+                        html += '</div>';
+                    }
+
+                    html += '<div class="section-title">系统提示词</div>';
+                    html += '<div class="code-block"><pre>' + escapeHtml(e.system_prompt || '未设置系统提示词') + '</pre></div>';
+
+                    document.getElementById('empInfo').innerHTML = html;
+                })
+                .catch(function(err){
+                    document.getElementById('empInfo').innerHTML = '<div style="color:#ff6b6b;">加载失败: ' + escapeHtml(err.message) + '</div>';
+                });
+        }
+
+        function loadLogs(){
+            fetch('/admin/employee/logs?employee_id=' + empId + '&page=' + logPage + '&page_size=10')
+                .then(function(r){ return r.json(); })
+                .then(function(data){
+                    if(!data.items || data.items.length === 0){
+                        document.getElementById('callLogs').innerHTML = '<div class="empty-state">暂无调用记录</div>';
+                        document.getElementById('logPagination').innerHTML = '';
+                        return;
+                    }
+                    var html = '';
+                    data.items.forEach(function(log){
+                        var statusClass = log.status === 'success' ? 'success' : 'failed';
+                        var statusLabel = log.status === 'success' ? '成功' : '失败';
+                        var inputPreview = '';
+                        try { var inp = JSON.parse(log.input_data); inputPreview = JSON.stringify(inp, null, 2).substring(0, 200); } catch(e){ inputPreview = (log.input_data || '').substring(0, 200); }
+                        var outputPreview = '';
+                        try { var outp = JSON.parse(log.output_data); outputPreview = JSON.stringify(outp, null, 2).substring(0, 200); } catch(e){ outputPreview = (log.output_data || '').substring(0, 200); }
+
+                        html += '<div class="log-item">';
+                        html += '<div class="log-header">';
+                        html += '<span><span class="log-status ' + statusClass + '">' + statusLabel + '</span> <span style="color:rgba(255,255,255,.3);font-size:12px;margin-left:8px;">' + (log.created_at || '') + '</span></span>';
+                        html += '<span style="color:rgba(255,255,255,.3);font-size:12px;">' + (log.duration_ms || 0) + 'ms</span>';
+                        html += '</div>';
+                        html += '<div class="log-body">';
+                        html += '<details><summary>输入数据</summary><pre>' + escapeHtml(inputPreview) + '</pre></details>';
+                        html += '<details style="margin-top:4px;"><summary>输出数据</summary><pre>' + escapeHtml(outputPreview) + '</pre></details>';
+                        if(log.error_message) html += '<div style="color:#ff6b6b;font-size:12px;margin-top:4px;">' + escapeHtml(log.error_message) + '</div>';
+                        html += '</div></div>';
+                    });
+                    document.getElementById('callLogs').innerHTML = html;
+
+                    var total = data.total || 0;
+                    var pages = Math.max(1, Math.ceil(total / data.page_size));
+                    var ph = '';
+                    ph += '<button class="btn-secondary" onclick="goLogPage(' + (logPage-1) + ')" ' + (logPage<=1?'disabled':'') + ' style="padding:4px 12px;font-size:12px;">上一页</button>';
+                    ph += ' <span style="padding:0 10px;font-size:12px;">' + logPage + '/' + pages + '</span> ';
+                    ph += '<button class="btn-secondary" onclick="goLogPage(' + (logPage+1) + ')" ' + (logPage>=pages?'disabled':'') + ' style="padding:4px 12px;font-size:12px;">下一页</button>';
+                    document.getElementById('logPagination').innerHTML = ph;
+                })
+                .catch(function(err){
+                    document.getElementById('callLogs').innerHTML = '<div style="color:#ff6b6b;">加载调用记录失败: ' + escapeHtml(err.message) + '</div>';
+                });
+        }
+
+        function goLogPage(p){ logPage = p; loadLogs(); }
+
+        function showToast(type, msg){
+            var el = document.getElementById('toast');
+            el.className = 'toast ' + type;
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(function(){ el.style.display = 'none'; }, 3000);
+        }
+
+        loadEmployee();
+        loadLogs();
+    </script>
+</body>
+</html>

@@ -1,8 +1,9 @@
-# 用户管理控制器（CRUD + 分页）
+# 用户管理控制器（CRUD + 分页 + 角色）
 import json
 import tornado.web
 from app.controllers.base import BaseHandler
 from app.models.user import UserRepository
+from app.models.role import RoleRepository
 
 
 class UserHandler(BaseHandler):
@@ -24,6 +25,8 @@ class UserListDataHandler(BaseHandler):
             data.append({
                 "id": row["id"],
                 "username": row["username"],
+                "role_id": row["role_id"],
+                "role_name": row["role_name"],
                 "create_at": row["create_at"],
             })
         result = {"code": 0, "msg": "", "count": total, "data": data}
@@ -37,9 +40,10 @@ class UserAddHandler(BaseHandler):
     def post(self):
         username = self.get_body_argument("username", "").strip()
         password = self.get_body_argument("password", "").strip()
+        role_id = int(self.get_body_argument("role_id", 2))
         if not username or not password:
             return self.write(json.dumps({"code": 1, "msg": "用户名和密码不能为空"}))
-        if UserRepository.create_user(username, password):
+        if UserRepository.create_user(username, password, role_id):
             self.write(json.dumps({"code": 0, "msg": "新增成功"}))
         else:
             self.write(json.dumps({"code": 1, "msg": "用户名已存在"}))
@@ -52,9 +56,12 @@ class UserEditHandler(BaseHandler):
         user_id = int(self.get_body_argument("id"))
         username = self.get_body_argument("username", "").strip()
         password = self.get_body_argument("password", "").strip()
+        role_id = self.get_body_argument("role_id", None)
+        if role_id is not None:
+            role_id = int(role_id)
         if not username:
             return self.write(json.dumps({"code": 1, "msg": "用户名不能为空"}))
-        ok = UserRepository.update_user(user_id, username=username, password=password if password else None)
+        ok = UserRepository.update_user(user_id, username=username, password=password if password else None, role_id=role_id)
         if ok:
             self.write(json.dumps({"code": 0, "msg": "更新成功"}))
         else:
@@ -73,3 +80,13 @@ class UserDeleteHandler(BaseHandler):
             return self.write(json.dumps({"code": 1, "msg": "不能删除当前登录用户"}))
         UserRepository.delete_user(user_id)
         self.write(json.dumps({"code": 0, "msg": "删除成功"}))
+
+
+class UserRolesHandler(BaseHandler):
+    """获取所有角色列表（供用户管理下拉选择）"""
+    @tornado.web.authenticated
+    def get(self):
+        rows = RoleRepository.get_all()
+        data = [{"id": r["id"], "name": r["name"], "code": r["code"]} for r in rows]
+        self.set_header("Content-Type", "application/json")
+        self.write(json.dumps(data, ensure_ascii=False))

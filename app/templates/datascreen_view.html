@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - 数智大屏</title>
+    <script src="{{ static_url('dist/echarts/echarts_v5.js') }}"></script>
+    <script src="{{ static_url('dist/echarts/echarts-gl.min.js') }}"></script>
+    <script src="{{ static_url('dist/echarts/echarts-wordcloud.min.js') }}"></script>
+    <script src="{{ static_url('dist/echarts/xlsx.full.min.js') }}"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:#0a0e1a; color:#c8d6e5; overflow-x:hidden; }
+        ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:#0a0e1a;}::-webkit-scrollbar-thumb{background:#2d3a6e;border-radius:3px;}
+
+        .top-bar { display:flex; justify-content:space-between; align-items:center; padding:16px 30px; background:linear-gradient(135deg,rgba(15,23,58,.95),rgba(30,27,75,.95)); border-bottom:1px solid rgba(0,255,255,.1); position:relative; z-index:10; }
+        .top-bar h1 { font-size:22px; font-weight:700; background:linear-gradient(135deg,#00d2ff,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .top-bar .actions { display:flex; gap:10px; align-items:center; }
+        .top-bar .actions button, .top-bar .actions a { padding:6px 16px; border:none; border-radius:6px; cursor:pointer; font-size:13px; transition:all .3s; text-decoration:none; }
+        .btn-back { background:rgba(0,255,255,.1); color:#00d2ff; }
+        .btn-back:hover { background:rgba(0,255,255,.2); }
+        .btn-export { background:rgba(0,200,83,.15); color:#5FB878; }
+        .btn-export:hover { background:rgba(0,200,83,.25); }
+        .btn-excel { background:rgba(255,107,107,.15); color:#ff6b6b; }
+        .btn-excel:hover { background:rgba(255,107,107,.25); }
+
+        .dashboard-container { padding:20px; min-height:calc(100vh - 70px); position:relative; }
+        .dashboard-container.fullscreen { padding:0; }
+        .dashboard-container.fullscreen .chart-wrapper { border-radius:0; border:none; margin:0; }
+
+        .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .chart-grid.single { grid-template-columns:1fr; }
+        .chart-grid.earth { grid-template-columns:1fr; min-height:80vh; }
+
+        .chart-wrapper { background:linear-gradient(135deg,rgba(15,23,58,.85),rgba(30,27,75,.85)); border:1px solid rgba(0,255,255,.1); border-radius:16px; padding:16px; position:relative; overflow:hidden; }
+        .chart-wrapper .chart-title { font-size:14px; color:rgba(255,255,255,.6); margin-bottom:8px; padding-left:4px; border-left:3px solid #00d2ff; padding-left:12px; }
+        .chart-box { width:100%; height:400px; }
+        .chart-box.earth-box { height:70vh; min-height:500px; }
+
+        /* 数据表格 */
+        .data-table-wrapper { margin-top:16px; max-height:300px; overflow:auto; border-radius:8px; border:1px solid rgba(0,255,255,.1); }
+        .data-table-wrapper table { width:100%; border-collapse:collapse; font-size:12px; }
+        .data-table-wrapper th { background:rgba(0,210,255,.1); color:#00d2ff; padding:8px 10px; text-align:left; position:sticky; top:0; }
+        .data-table-wrapper td { padding:6px 10px; border-bottom:1px solid rgba(255,255,255,.03); color:rgba(255,255,255,.7); }
+        .data-table-wrapper tr:hover td { background:rgba(0,210,255,.03); }
+
+        /* 详情弹窗 */
+        .detail-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.8); z-index:1000; align-items:center; justify-content:center; }
+        .detail-overlay.show { display:flex; }
+        .detail-box { background:#1a1f3a; border:1px solid rgba(0,255,255,.15); border-radius:16px; width:500px; max-width:90vw; max-height:80vh; overflow-y:auto; padding:30px; position:relative; }
+        .detail-box .close { position:absolute; top:15px; right:20px; cursor:pointer; font-size:24px; color:rgba(255,255,255,.3); }
+        .detail-box .close:hover { color:#ff6b6b; }
+        .detail-box h2 { font-size:18px; color:#00d2ff; margin-bottom:16px; }
+        .detail-box .field { display:flex; margin-bottom:8px; }
+        .detail-box .field label { min-width:80px; color:rgba(255,255,255,.4); font-size:13px; }
+        .detail-box .field span { color:#e2e8f0; font-size:13px; }
+
+        .fullscreen-toggle { position:fixed; bottom:30px; right:30px; z-index:100; width:44px; height:44px; border-radius:50%; border:1px solid rgba(0,255,255,.2); background:rgba(15,23,58,.9); color:#00d2ff; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; transition:all .3s; }
+        .fullscreen-toggle:hover { background:rgba(0,210,255,.15); transform:scale(1.1); }
+
+        .loading { text-align:center; padding:100px 20px; color:rgba(255,255,255,.3); font-size:14px; }
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:16px; }
+        .stat-card { background:linear-gradient(135deg,rgba(15,23,58,.85),rgba(30,27,75,.85)); border:1px solid rgba(0,255,255,.1); border-radius:12px; padding:20px; text-align:center; }
+        .stat-card .num { font-size:32px; font-weight:700; background:linear-gradient(135deg,#00d2ff,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .stat-card .label { font-size:13px; color:rgba(255,255,255,.4); margin-top:4px; }
+
+        .call-log-section { margin-top:16px; }
+        .call-log-section details { background:rgba(0,0,0,.3); border-radius:8px; padding:12px 16px; }
+        .call-log-section details summary { cursor:pointer; color:#00d2ff; font-size:13px; }
+        .call-log-table { width:100%; border-collapse:collapse; margin-top:8px; font-size:12px; }
+        .call-log-table th { color:rgba(255,255,255,.4); padding:6px; text-align:left; border-bottom:1px solid rgba(255,255,255,.05); }
+        .call-log-table td { padding:6px; color:rgba(255,255,255,.6); border-bottom:1px solid rgba(255,255,255,.02); }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h1 id="screenTitle">数智大屏</h1>
+        <div class="actions">
+            <a class="btn-back" href="javascript:history.back()">&larr; 返回</a>
+            <button class="btn-export" onclick="exportCSV()">📥 导出CSV</button>
+            <button class="btn-excel" onclick="exportExcel()">📊 导出Excel</button>
+        </div>
+    </div>
+    <div class="dashboard-container" id="dashboardContainer">
+        <div id="loadingState" class="loading">加载大屏数据...</div>
+        <div id="dashboardContent" style="display:none;">
+            <div id="statsArea" class="stats-grid"></div>
+            <div id="chartGrid" class="chart-grid"></div>
+            <div id="dataTableArea"></div>
+            <div id="callLogArea" class="call-log-section"></div>
+        </div>
+    </div>
+    <div class="fullscreen-toggle" id="fsToggle" onclick="toggleFullscreen()" title="全屏模式">⛶</div>
+
+    <div class="detail-overlay" id="detailModal">
+        <div class="detail-box">
+            <span class="close" onclick="closeDetail()">&times;</span>
+            <h2 id="detailTitle">详细数据</h2>
+            <div id="detailBody"></div>
+        </div>
+    </div>
+
+    <script>
+        var dsId = '{{ datascreen_id }}';
+        var screenData = null;
+        var chartInstances = [];
+
+        function escapeHtml(t){if(!t)return '';return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+        // 安全初始化 ECharts：检查 DOM 容器是否存在，避免 "Cannot read properties of undefined" 崩溃
+        function safeInitECharts(domId){
+            if(typeof echarts === 'undefined'){
+                console.warn('ECharts 库未加载，无法初始化:', domId);
+                return null;
+            }
+            var dom = document.getElementById(domId);
+            if(!dom){
+                console.warn('ECharts 容器 DOM 不存在:', domId);
+                return null;
+            }
+            try {
+                var chart = echarts.init(dom);
+                chartInstances.push(chart);
+                return chart;
+            } catch(e){
+                console.warn('ECharts 初始化失败:', domId, e.message);
+                return null;
+            }
+        }
+        // 安全创建渐变色：echarts.graphic.LinearGradient 不可用时回退为纯色
+        function safeLinearGradient(x1, y1, x2, y2, colorStops, fallbackColor){
+            try {
+                if(typeof echarts !== 'undefined' && echarts.graphic && echarts.graphic.LinearGradient){
+                    return new echarts.graphic.LinearGradient(x1, y1, x2, y2, colorStops);
+                }
+            } catch(e){}
+            return fallbackColor || '#3b82f6';
+        }
+
+        function loadScreen(){
+            document.getElementById('loadingState').style.display='block';
+            document.getElementById('dashboardContent').style.display='none';
+            fetch('/admin/datascreen/render?id='+dsId).then(function(r){return r.json();}).then(function(res){
+                if(res.code!==0){document.getElementById('loadingState').innerHTML='<div style="color:#ff6b6b;">加载失败: '+escapeHtml(res.msg)+'</div>';return;}
+                screenData=res.data;
+                renderScreen(screenData);
+            }).catch(function(err){
+                document.getElementById('loadingState').innerHTML='<div style="color:#ff6b6b;">请求异常: '+escapeHtml(err.message)+'</div>';
+            });
+        }
+
+        function renderScreen(d){
+            document.getElementById('screenTitle').textContent=d.name||'数智大屏';
+            document.getElementById('loadingState').style.display='none';
+            document.getElementById('dashboardContent').style.display='block';
+
+            var rawData = d.raw_data || [];
+            var chartConfig = d.chart_config || {};
+            var screenType = d.screen_type || 'chart';
+            var grid = document.getElementById('chartGrid');
+            var statsArea = document.getElementById('statsArea');
+            var dataArea = document.getElementById('dataTableArea');
+            var logArea = document.getElementById('callLogArea');
+
+            grid.innerHTML = '';
+            statsArea.innerHTML = '';
+            dataArea.innerHTML = '';
+            logArea.innerHTML = '';
+            chartInstances.forEach(function(c){try{c.dispose();}catch(e){}});
+            chartInstances = [];
+
+            // 统计卡片（数值型数据自动生成）
+            if(rawData.length>0 && typeof rawData[0]==='object'){
+                var keys = Object.keys(rawData[0]);
+                var numKeys = keys.filter(function(k){return typeof rawData[0][k]==='number';});
+                numKeys.slice(0,6).forEach(function(k){
+                    var total = 0, maxVal = -Infinity, minVal = Infinity;
+                    rawData.forEach(function(r){
+                        var v = Number(r[k])||0;
+                        total += v;
+                        if(v>maxVal) maxVal=v;
+                        if(v<minVal) minVal=v;
+                    });
+                    var avg = rawData.length ? (total/rawData.length).toFixed(1) : 0;
+                    statsArea.innerHTML += '<div class="stat-card"><div class="num">'+total+'</div><div class="label">'+k+'（总计）</div></div>';
+                    statsArea.innerHTML += '<div class="stat-card"><div class="num">'+avg+'</div><div class="label">'+k+'（平均）</div></div>';
+                    statsArea.innerHTML += '<div class="stat-card"><div class="num">'+maxVal+'</div><div class="label">'+k+'（最大）</div></div>';
+                });
+            }
+
+            // 根据类型渲染图表
+            var gridClass = 'single';
+            if(screenType==='mixed') gridClass = '';
+            else if(screenType==='earth') gridClass = 'earth';
+            grid.className = 'chart-grid ' + gridClass;
+
+            if(screenType==='earth'){
+                renderEarth(grid, rawData, chartConfig);
+            } else if(screenType==='wordcloud'){
+                renderWordcloud(grid, rawData, chartConfig);
+            } else if(screenType==='stat'){
+                renderStatCharts(grid, rawData, chartConfig);
+            } else if(screenType==='mixed'){
+                renderMixed(grid, rawData, chartConfig);
+            } else {
+                renderCharts(grid, rawData, chartConfig);
+            }
+
+            // 数据表格
+            if(rawData.length>0){
+                dataArea.innerHTML = '<div class="chart-wrapper"><div class="chart-title">📋 原始数据</div><div class="data-table-wrapper">'+buildTable(rawData)+'</div></div>';
+            }
+
+            // 调用记录
+            loadCallLogs();
+        }
+
+        function buildTable(data){
+            if(!data||!data.length) return '';
+            var headers = Object.keys(data[0]);
+            var html = '<table><thead><tr>';
+            headers.forEach(function(h){html+='<th>'+escapeHtml(h)+'</th>';});
+            html+='</tr></thead><tbody>';
+            data.forEach(function(row){
+                html+='<tr onclick="showDetail('+escapeHtml(JSON.stringify(row).replace(/"/g,'&quot;'))+')" style="cursor:pointer;">';
+                headers.forEach(function(h){
+                    var v = row[h];
+                    if(typeof v==='object') v=JSON.stringify(v);
+                    html+='<td>'+escapeHtml(String(v))+'</td>';
+                });
+                html+='</tr>';
+            });
+            html+='</tbody></table>';
+            return html;
+        }
+
+        // === 图表渲染 ===
+        function renderCharts(grid, data, config){
+            if(!data||!data.length){
+                grid.innerHTML = '<div class="chart-wrapper"><div class="chart-title">📊 图表</div><div style="text-align:center;padding:60px;color:rgba(255,255,255,.3);">暂无数据</div></div>';
+                return;
+            }
+            var keys = Object.keys(data[0]);
+            var nameKey = config.xField || keys[0];
+            var valueKey = config.yField || (keys.length>1?keys[1]:keys[0]);
+
+            // 柱状图
+            var wrapper1 = document.createElement('div'); wrapper1.className='chart-wrapper';
+            wrapper1.innerHTML = '<div class="chart-title">📊 柱状图</div><div class="chart-box" id="chartBar"></div>';
+            grid.appendChild(wrapper1);
+            setTimeout(function(){
+                var c=safeInitECharts('chartBar');
+                if(!c)return;
+                c.setOption({
+                    tooltip:{trigger:'axis',formatter:function(p){var r='<b>'+p[0].name+'</b><br/>';p.forEach(function(i){r+=i.marker+' '+i.seriesName+': '+i.value+'</b>';});return r;}},
+                    grid:{left:'10%',right:'10%',top:40,bottom:40,containLabel:true},
+                    xAxis:{type:'category',data:data.map(function(d){return d[nameKey];}),axisLabel:{color:'rgba(255,255,255,.5)'}},
+                    yAxis:{type:'value',axisLabel:{color:'rgba(255,255,255,.5)'}},
+                    series:[{type:'bar',data:data.map(function(d){return d[valueKey];}),itemStyle:{color:safeLinearGradient(0,0,0,1,[{offset:0,color:'#00d2ff'},{offset:1,color:'#3b82f6'}],'#3b82f6')},emphasis:{itemStyle:{color:'#a855f7'}}}]
+                });
+                c.on('click',function(p){showDetail(data[p.dataIndex]);});
+            },100);
+
+            // 饼图
+            var wrapper2 = document.createElement('div'); wrapper2.className='chart-wrapper';
+            wrapper2.innerHTML = '<div class="chart-title">🥧 饼图</div><div class="chart-box" id="chartPie"></div>';
+            grid.appendChild(wrapper2);
+            setTimeout(function(){
+                var c=safeInitECharts('chartPie');
+                if(!c)return;
+                c.setOption({
+                    tooltip:{trigger:'item',formatter:'{b}: {c} ({d}%)'},
+                    series:[{type:'pie',radius:['30%','60%'],center:['50%','55%'],data:data.map(function(d){return {name:d[nameKey],value:d[valueKey]};}),label:{color:'rgba(255,255,255,.6)'},emphasis:{itemStyle:{shadowBlur:10,shadowColor:'rgba(0,0,0,.5)'}},itemStyle:{borderColor:'#0a0e1a',borderWidth:2}}]
+                });
+                c.on('click',function(p){showDetail(data[p.dataIndex]);});
+            },200);
+
+            // 折线图
+            var wrapper3 = document.createElement('div'); wrapper3.className='chart-wrapper';
+            wrapper3.innerHTML = '<div class="chart-title">📈 折线图</div><div class="chart-box" id="chartLine"></div>';
+            grid.appendChild(wrapper3);
+            setTimeout(function(){
+                var c=safeInitECharts('chartLine');
+                if(!c)return;
+                c.setOption({
+                    tooltip:{trigger:'axis'},
+                    grid:{left:'10%',right:'10%',top:40,bottom:40,containLabel:true},
+                    xAxis:{type:'category',data:data.map(function(d){return d[nameKey];}),axisLabel:{color:'rgba(255,255,255,.5)'}},
+                    yAxis:{type:'value',axisLabel:{color:'rgba(255,255,255,.5)'}},
+                    series:[{type:'line',data:data.map(function(d){return d[valueKey];}),smooth:true,lineStyle:{color:'#a855f7',width:3},areaStyle:{color:safeLinearGradient(0,0,0,1,[{offset:0,color:'rgba(168,85,247,.3)'},{offset:1,color:'rgba(168,85,247,0)'}],'rgba(168,85,247,.3)')}}]
+                });
+                c.on('click',function(p){showDetail(data[p.dataIndex]);});
+            },300);
+
+            // 散点图
+            if(keys.length>=2){
+                var wrapper4 = document.createElement('div'); wrapper4.className='chart-wrapper';
+                wrapper4.innerHTML = '<div class="chart-title">🔵 散点图</div><div class="chart-box" id="chartScatter"></div>';
+                grid.appendChild(wrapper4);
+                setTimeout(function(){
+                    var c=safeInitECharts('chartScatter');
+                    if(!c)return;
+                    var xKey=config.xField||keys[0], yKey=config.yField||keys[1];
+                    c.setOption({
+                        tooltip:{trigger:'item',formatter:function(p){return p.data[0]+': '+p.data[1];}},
+                        grid:{left:'10%',right:'10%',top:40,bottom:40,containLabel:true},
+                        xAxis:{type:'value',name:xKey,axisLabel:{color:'rgba(255,255,255,.5)'}},
+                        yAxis:{type:'value',name:yKey,axisLabel:{color:'rgba(255,255,255,.5)'}},
+                        series:[{type:'scatter',data:data.map(function(d){return [Number(d[xKey])||0,Number(d[yKey])||0];}),symbolSize:12,itemStyle:{color:safeLinearGradient(0,0,1,1,[{offset:0,color:'#00d2ff'},{offset:1,color:'#a855f7'}],'#00d2ff')}}]
+                    });
+                    c.on('click',function(p){showDetail(p.data);});
+                },400);
+            }
+        }
+
+        function renderEarth(grid, data, config){
+            grid.innerHTML = '<div class="chart-wrapper" style="grid-column:1/-1;"><div class="chart-title">🌍 3D 地球</div><div class="chart-box earth-box" id="earthChart"></div></div>';
+            setTimeout(function(){
+                var canvas = document.createElement('canvas');
+                var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if(!gl){
+                    grid.innerHTML = '<div class="chart-wrapper" style="grid-column:1/-1;"><div class="chart-title">🌍 3D 地球</div><div style="text-align:center;padding:60px;color:#ff6b6b;">您的浏览器不支持 WebGL，无法显示 3D 地球</div></div>';
+                    return;
+                }
+
+                var c=safeInitECharts('earthChart');
+                if(!c)return;
+
+                var scatterData = [];
+                var scatterNames = {};
+                var globalCities = [
+                    {name:'北京', lng:116.4, lat:39.9, value:100},
+                    {name:'上海', lng:121.5, lat:31.2, value:95},
+                    {name:'广州', lng:113.3, lat:23.1, value:88},
+                    {name:'深圳', lng:114.1, lat:22.5, value:92},
+                    {name:'成都', lng:104.1, lat:30.6, value:85},
+                    {name:'杭州', lng:120.2, lat:30.3, value:82},
+                    {name:'东京', lng:139.7, lat:35.7, value:88},
+                    {name:'首尔', lng:127.0, lat:37.6, value:78},
+                    {name:'新加坡', lng:103.8, lat:1.3, value:85},
+                    {name:'悉尼', lng:151.2, lat:-33.9, value:75},
+                    {name:'伦敦', lng:-0.1, lat:51.5, value:90},
+                    {name:'巴黎', lng:2.3, lat:48.9, value:86},
+                    {name:'纽约', lng:-74.0, lat:40.7, value:95},
+                    {name:'洛杉矶', lng:-118.2, lat:34.1, value:88},
+                    {name:'芝加哥', lng:-87.6, lat:41.9, value:80},
+                    {name:'莫斯科', lng:12.5, lat:55.8, value:82},
+                    {name:'柏林', lng:13.4, lat:52.5, value:76},
+                    {name:'孟买', lng:72.8, lat:19.1, value:84},
+                    {name:'迪拜', lng:55.3, lat:25.3, value:80},
+                    {name:'圣保罗', lng:-46.6, lat:-23.5, value:78},
+                    {name:'开罗', lng:31.2, lat:30.0, value:75},
+                    {name:'约翰内斯堡', lng:28.0, lat:-26.2, value:70},
+                    {name:'墨西哥城', lng:-99.1, lat:19.4, value:76},
+                    {name:'多伦多', lng:-79.4, lat:43.7, value:78}
+                ];
+
+                if(data&&data.length){
+                    data.forEach(function(d,i){
+                        var lat = parseFloat((Math.random()*180-90).toFixed(2));
+                        var lng = parseFloat((Math.random()*360-180).toFixed(2));
+                        var val = 0;
+                        if(typeof d==='object'&&d!==null){
+                            var firstVal = Object.values(d)[0];
+                            val = (typeof firstVal==='number'&&!isNaN(firstVal)) ? firstVal : Math.random()*100;
+                        } else {
+                            val = (typeof d==='number'&&!isNaN(d)) ? d : Math.random()*100;
+                        }
+                        var name = (typeof d==='object'&&d!==null) ? String(Object.keys(d)[0]||'') : '业务点'+(i+1);
+                        if(!isNaN(lat)&&!isNaN(lng)){
+                            var idx = scatterData.length;
+                            scatterData.push([lng, lat, 0]);
+                            scatterNames[idx] = name;
+                        }
+                    });
+                }
+
+                globalCities.forEach(function(city, i){
+                    var idx = scatterData.length;
+                    scatterData.push([city.lng, city.lat, 0]);
+                    scatterNames[idx] = city.name;
+                });
+
+                try {
+                    // 加载真实的全球国家边界 GeoJSON 数据
+                    var earthCanvas = document.createElement('canvas');
+                    earthCanvas.width = 4096;
+                    earthCanvas.height = 2048;
+                    var earthCtx = earthCanvas.getContext('2d');
+
+                    // 1. 绘制海洋背景
+                    var oceanGrad = earthCtx.createLinearGradient(0, 0, 0, 2048);
+                    oceanGrad.addColorStop(0, '#1a5fa3');
+                    oceanGrad.addColorStop(0.3, '#0d4f8b');
+                    oceanGrad.addColorStop(0.5, '#0a3a6e');
+                    oceanGrad.addColorStop(0.7, '#0d4f8b');
+                    oceanGrad.addColorStop(1, '#1a5fa3');
+                    earthCtx.fillStyle = oceanGrad;
+                    earthCtx.fillRect(0, 0, 4096, 2048);
+
+                    // 经纬度转纹理坐标
+                    function lngLatToXY(lng, lat){
+                        var x = (lng + 180) / 360 * 4096;
+                        var y = (90 - lat) / 180 * 2048;
+                        return [x, y];
+                    }
+
+                    // 2. 加载并绘制真实的国家边界数据
+                    fetch('/static/data/world.geojson').then(function(r){ return r.json(); }).then(function(geoData){
+                        // 为不同大洲分配颜色
+                        var continentColors = {
+                            '亚洲': '#7ab87a',
+                            '欧洲': '#7ab87a',
+                            '非洲': '#c4a574',
+                            '北美洲': '#a8c47a',
+                            '南美洲': '#7ab87a',
+                            '大洋洲': '#a8c47a',
+                            '南极洲': '#d4d4d4'
+                        };
+
+                        // 国家所属大洲（简化映射）
+                        var countryToContinent = {
+                            'Afghanistan':'亚洲','Albania':'欧洲','Algeria':'非洲','Angola':'非洲',
+                            'Argentina':'南美洲','Armenia':'亚洲','Australia':'大洋洲','Austria':'欧洲',
+                            'Azerbaijan':'亚洲','Bahamas':'北美洲','Bahrain':'亚洲','Bangladesh':'亚洲',
+                            'Belarus':'欧洲','Belgium':'欧洲','Belize':'北美洲','Benin':'非洲',
+                            'Bhutan':'亚洲','Bolivia':'南美洲','Bosnia and Herz.':'欧洲','Botswana':'非洲',
+                            'Brazil':'南美洲','Brunei':'亚洲','Bulgaria':'欧洲','Burkina Faso':'非洲',
+                            'Burundi':'非洲','Cambodia':'亚洲','Cameroon':'非洲','Canada':'北美洲',
+                            'Central African Rep.':'非洲','Chad':'非洲','Chile':'南美洲','China':'亚洲',
+                            'Colombia':'南美洲','Congo':'非洲','Costa Rica':'北美洲','Croatia':'欧洲',
+                            'Cuba':'北美洲','Cyprus':'亚洲','Czech Rep.':'欧洲','Czech Republic':'欧洲',
+                            "Côte d'Ivoire":'非洲','Dem. Rep. Congo':'非洲','Denmark':'欧洲','Djibouti':'非洲',
+                            'Dominican Rep.':'北美洲','Ecuador':'南美洲','Egypt':'非洲','El Salvador':'北美洲',
+                            'Eq. Guinea':'非洲','Eritrea':'非洲','Estonia':'欧洲','Ethiopia':'非洲',
+                            'Fiji':'大洋洲','Finland':'欧洲','France':'欧洲','Fr. S. Antarctic Lands':'南极洲',
+                            'Gabon':'非洲','Gambia':'非洲','Georgia':'亚洲','Germany':'欧洲',
+                            'Ghana':'非洲','Greece':'欧洲','Greenland':'北美洲','Guatemala':'北美洲',
+                            'Guinea':'非洲','Guinea-Bissau':'非洲','Guyana':'南美洲','Haiti':'北美洲',
+                            'Honduras':'北美洲','Hungary':'欧洲','Iceland':'欧洲','India':'亚洲',
+                            'Indonesia':'亚洲','Iran':'亚洲','Iraq':'亚洲','Ireland':'欧洲',
+                            'Israel':'亚洲','Italy':'欧洲','Jamaica':'北美洲','Japan':'亚洲',
+                            'Jordan':'亚洲','Kazakhstan':'亚洲','Kenya':'非洲','Korea':'亚洲',
+                            'Kuwait':'亚洲','Kyrgyzstan':'亚洲','Laos':'亚洲','Latvia':'欧洲',
+                            'Lebanon':'亚洲','Lesotho':'非洲','Liberia':'非洲','Libya':'非洲',
+                            'Lithuania':'欧洲','Luxembourg':'欧洲','Macedonia':'欧洲','Madagascar':'非洲',
+                            'Malawi':'非洲','Malaysia':'亚洲','Mali':'非洲','Mauritania':'非洲',
+                            'Mexico':'北美洲','Moldova':'欧洲','Mongolia':'亚洲','Montenegro':'欧洲',
+                            'Morocco':'非洲','Mozambique':'非洲','Myanmar':'亚洲','N. Korea':'亚洲',
+                            'Namibia':'非洲','Nepal':'亚洲','Netherlands':'欧洲','New Caledonia':'大洋洲',
+                            'New Zealand':'大洋洲','Nicaragua':'北美洲','Niger':'非洲','Nigeria':'非洲',
+                            'Norway':'欧洲','Oman':'亚洲','Pakistan':'亚洲','Palestine':'亚洲',
+                            'Panama':'北美洲','Papua New Guinea':'大洋洲','Paraguay':'南美洲',
+                            'Peru':'南美洲','Philippines':'亚洲','Poland':'欧洲','Portugal':'欧洲',
+                            'Puerto Rico':'北美洲','Qatar':'亚洲','Romania':'欧洲','Russia':'亚洲',
+                            'Rwanda':'非洲','S. Africa':'非洲','S. Sudan':'非洲','Saudi Arabia':'亚洲',
+                            'Senegal':'非洲','Serbia':'欧洲','Sierra Leone':'非洲','Singapore':'亚洲',
+                            'Slovakia':'欧洲','Slovenia':'欧洲','Solomon Is.':'大洋洲','Somalia':'非洲',
+                            'South Korea':'亚洲','Spain':'欧洲','Sri Lanka':'亚洲','Sudan':'非洲',
+                            'Suriname':'南美洲','Sweden':'欧洲','Switzerland':'欧洲','Syria':'亚洲',
+                            'Taiwan':'亚洲','Tajikistan':'亚洲','Tanzania':'非洲','Thailand':'亚洲',
+                            'Timor-Leste':'亚洲','Togo':'非洲','Trinidad and Tobago':'北美洲',
+                            'Tunisia':'非洲','Turkey':'亚洲','Turkmenistan':'亚洲','Uganda':'非洲',
+                            'Ukraine':'欧洲','United Arab Emirates':'亚洲','United Kingdom':'欧洲',
+                            'United States of America':'北美洲','Uruguay':'南美洲','Uzbekistan':'亚洲',
+                            'Vanuatu':'大洋洲','Venezuela':'南美洲','Vietnam':'亚洲','W. Sahara':'非洲',
+                            'Yemen':'亚洲','Zambia':'非洲','Zimbabwe':'非洲'
+                        };
+
+                        // 3. 绘制国家填充
+                        geoData.features.forEach(function(feature){
+                            var countryName = feature.properties.name;
+                            var continent = countryToContinent[countryName] || '亚洲';
+                            var color = continentColors[continent] || '#7ab87a';
+
+                            earthCtx.fillStyle = color;
+                            earthCtx.strokeStyle = '#4a7a4a';
+                            earthCtx.lineWidth = 1.5;
+                            earthCtx.lineJoin = 'round';
+
+                            var coords = feature.geometry.coordinates;
+                            var type = feature.geometry.type;
+
+                            function drawPolygon(polygon){
+                                earthCtx.beginPath();
+                                polygon.forEach(function(ring, idx){
+                                    ring.forEach(function(point, i){
+                                        var xy = lngLatToXY(point[0], point[1]);
+                                        if(idx === 0 && i === 0){
+                                            earthCtx.moveTo(xy[0], xy[1]);
+                                        } else {
+                                            earthCtx.lineTo(xy[0], xy[1]);
+                                        }
+                                    });
+                                });
+                                earthCtx.closePath();
+                                earthCtx.fill();
+                                earthCtx.stroke();
+                            }
+
+                            if(type === 'Polygon'){
+                                drawPolygon(coords);
+                            } else if(type === 'MultiPolygon'){
+                                coords.forEach(function(polygon){
+                                    drawPolygon(polygon);
+                                });
+                            }
+                        });
+
+                        // 4. 添加经纬度网格
+                        earthCtx.strokeStyle = 'rgba(100, 150, 200, 0.12)';
+                        earthCtx.lineWidth = 0.5;
+                        for(var lng = -180; lng <= 180; lng += 30){
+                            earthCtx.beginPath();
+                            earthCtx.moveTo((lng + 180) / 360 * 4096, 0);
+                            earthCtx.lineTo((lng + 180) / 360 * 4096, 2048);
+                            earthCtx.stroke();
+                        }
+                        for(var lat = -60; lat <= 60; lat += 30){
+                            earthCtx.beginPath();
+                            earthCtx.moveTo(0, (90 - lat) / 180 * 2048);
+                            earthCtx.lineTo(4096, (90 - lat) / 180 * 2048);
+                            earthCtx.stroke();
+                        }
+
+                        var earthTexture = earthCanvas.toDataURL();
+
+                        var option = {
+                            backgroundColor: '#0a0e1a',
+                            globe: {
+                                baseTexture: earthTexture,
+                                heightTexture: '',
+                                shading: 'lambert',
+                                environment: 'none',
+                                light: {
+                                    main: {
+                                        intensity: 1.2,
+                                        shadow: false,
+                                        alpha: 30,
+                                        beta: 40
+                                    },
+                                    ambient: {
+                                        intensity: 0.6
+                                    }
+                                },
+                                viewControl: {
+                                    autoRotate: true,
+                                    autoRotateSpeed: 2,
+                                    distance: 200,
+                                    minDistance: 150,
+                                    maxDistance: 300
+                                },
+                                radius: 100,
+                                itemStyle: {
+                                    color: '#0a3a6e',
+                                    borderColor: '#1a5fa3',
+                                    borderWidth: 0.5
+                                }
+                            },
+                            series: [
+                                {
+                                    type: 'scatter3D',
+                                    coordinateSystem: 'globe',
+                                    data: scatterData,
+                                    symbolSize: 12,
+                                    itemStyle: {
+                                        color: '#ffd700',
+                                        opacity: 0.95,
+                                        shadowBlur: 15,
+                                        shadowColor: '#ffd700'
+                                    },
+                                    label: {
+                                        show: true,
+                                        position: 'top',
+                                        distance: 8,
+                                        formatter: function(params) { return scatterNames[params.dataIndex] || ''; },
+                                        color: '#fff',
+                                        fontSize: 11,
+                                        fontWeight: 'bold',
+                                        textBorderColor: 'rgba(0,0,0,0.8)',
+                                        textBorderWidth: 2,
+                                        textShadowColor: 'rgba(255, 215, 0, 0.8)',
+                                        textShadowBlur: 4
+                                    },
+                                    emphasis: {
+                                        itemStyle: {
+                                            color: '#ff6b35',
+                                            shadowBlur: 25,
+                                            shadowColor: '#ff6b35'
+                                        },
+                                        label: {
+                                            show: true,
+                                            formatter: function(params) { return scatterNames[params.dataIndex] || ''; },
+                                            color: '#fff',
+                                            fontSize: 13,
+                                            fontWeight: 'bold',
+                                            distance: 8
+                                        }
+                                    }
+                                }
+                            ]
+                        };
+                        c.setOption(option);
+                        c.on('click',function(p){
+                            var name = scatterNames[p.dataIndex] || '未知';
+                            var value = p.data || [];
+                            showDetail({name:name,value:value});
+                        });
+                    }).catch(function(err){
+                        console.warn('加载世界地图数据失败:', err);
+                        grid.innerHTML = '<div class="chart-wrapper" style="grid-column:1/-1;"><div class="chart-title">🌍 3D 地球</div><div style="text-align:center;padding:60px;color:#ff6b6b;">加载地图数据失败: '+err.message+'</div></div>';
+                    });
+                } catch(e){
+                    console.warn('3D 地球渲染失败:', e.message);
+                    grid.innerHTML = '<div class="chart-wrapper" style="grid-column:1/-1;"><div class="chart-title">🌍 3D 地球</div><div style="text-align:center;padding:60px;color:#ff6b6b;">3D 地球渲染失败: '+e.message+'</div></div>';
+                }
+            },100);
+        }
+
+        function renderWordcloud(grid, data, config){
+            grid.innerHTML = '<div class="chart-wrapper" style="grid-column:1/-1;"><div class="chart-title">☁️ 词云</div><div class="chart-box earth-box" id="wordcloudChart"></div></div>';
+            setTimeout(function(){
+                var c=safeInitECharts('wordcloudChart');
+                if(!c)return;
+                var wordData = [];
+                if(data&&data.length){
+                    data.forEach(function(d){
+                        if(typeof d==='string') wordData.push({name:d,value:Math.random()*100+10});
+                        else {
+                            var keys = Object.keys(d);
+                            wordData.push({name:String(d[keys[0]]||''),value:Number(d[keys[1]])||Math.random()*100+10});
+                        }
+                    });
+                } else {
+                    wordData = [
+                        {name:'数据分析',value:95},{name:'人工智能',value:88},{name:'数字化转型',value:82},{name:'云计算',value:78},
+                        {name:'大数据',value:90},{name:'机器学习',value:85},{name:'物联网',value:72},{name:'区块链',value:65},
+                        {name:'边缘计算',value:58},{name:'5G',value:70},{name:'智能制造',value:68},{name:'数字孪生',value:60},
+                        {name:'智慧城市',value:75},{name:'自动化',value:80},{name:'可视化',value:92},{name:'实时监控',value:76}
+                    ];
+                }
+                c.setOption({
+                    series:[{
+                        type:'wordCloud',
+                        shape:'circle',
+                        left:'center',top:'center',width:'90%',height:'90%',
+                        sizeRange:[14,60],
+                        rotationRange:[-30,30],
+                        rotationStep:15,
+                        gridSize:8,
+                        drawOutOfBound:false,
+                        layoutAnimation:true,
+                        textStyle:{fontFamily:'Microsoft YaHei',fontWeight:'bold',color:function(){return '#'+Math.floor(Math.random()*0xffffff).toString(16);}},
+                        data:wordData,
+                        emphasis:{textStyle:{fontSize:function(p){return p.dataSize+8;},shadowBlur:10,shadowColor:'rgba(0,0,0,.3)'}}
+                    }]
+                });
+                c.on('click',function(p){showDetail({name:p.name,value:p.value});});
+            },100);
+        }
+
+        function renderStatCharts(grid, data, config){
+            if(!data||!data.length){
+                grid.innerHTML = '<div class="chart-wrapper"><div class="chart-title">📈 统计数据</div><div style="text-align:center;padding:60px;color:rgba(255,255,255,.3);">暂无数据</div></div>';
+                return;
+            }
+            renderCharts(grid, data, config);
+        }
+
+        function renderMixed(grid, data, config){
+            grid.style.gridTemplateColumns = '1fr 1fr';
+            // 柱状图
+            var w1 = document.createElement('div'); w1.className='chart-wrapper';
+            w1.innerHTML = '<div class="chart-title">📊 柱状图</div><div class="chart-box" id="mixBar"></div>';
+            grid.appendChild(w1);
+            // 饼图
+            var w2 = document.createElement('div'); w2.className='chart-wrapper';
+            w2.innerHTML = '<div class="chart-title">🥧 饼图</div><div class="chart-box" id="mixPie"></div>';
+            grid.appendChild(w2);
+            // 词云
+            var w3 = document.createElement('div'); w3.className='chart-wrapper';
+            w3.innerHTML = '<div class="chart-title">☁️ 词云</div><div class="chart-box" id="mixCloud"></div>';
+            grid.appendChild(w3);
+            // 折线
+            var w4 = document.createElement('div'); w4.className='chart-wrapper';
+            w4.innerHTML = '<div class="chart-title">📈 折线图</div><div class="chart-box" id="mixLine"></div>';
+            grid.appendChild(w4);
+
+            setTimeout(function(){
+                if(!data||!data.length) return;
+                var keys = Object.keys(data[0]);
+                var nk=keys[0], vk=keys.length>1?keys[1]:keys[0];
+                // 柱状
+                var c1=safeInitECharts('mixBar'); if(!c1)return;
+                c1.setOption({tooltip:{trigger:'axis'},xAxis:{type:'category',data:data.map(function(d){return d[nk];}),axisLabel:{color:'rgba(255,255,255,.5)'}},yAxis:{type:'value',axisLabel:{color:'rgba(255,255,255,.5)'}},series:[{type:'bar',data:data.map(function(d){return d[vk];}),itemStyle:{color:safeLinearGradient(0,0,0,1,[{offset:0,color:'#00d2ff'},{offset:1,color:'#3b82f6'}],'#3b82f6')}}]});
+                c1.on('click',function(p){showDetail(data[p.dataIndex]);});
+                // 饼
+                var c2=safeInitECharts('mixPie'); if(!c2)return;
+                c2.setOption({tooltip:{trigger:'item',formatter:'{b}: {c}'},series:[{type:'pie',radius:['30%','60%'],data:data.map(function(d){return {name:d[nk],value:d[vk]};}),label:{color:'rgba(255,255,255,.6)'},itemStyle:{borderColor:'#0a0e1a',borderWidth:2}}]});
+                c2.on('click',function(p){showDetail(data[p.dataIndex]);});
+                // 词云
+                var c3=safeInitECharts('mixCloud'); if(!c3)return;
+                c3.setOption({series:[{type:'wordCloud',shape:'circle',sizeRange:[12,40],data:data.map(function(d){return {name:String(d[nk]),value:Number(d[vk])};})}]});
+                c3.on('click',function(p){showDetail({name:p.name,value:p.value});});
+                // 折线
+                var c4=safeInitECharts('mixLine'); if(!c4)return;
+                c4.setOption({tooltip:{trigger:'axis'},xAxis:{type:'category',data:data.map(function(d){return d[nk];}),axisLabel:{color:'rgba(255,255,255,.5)'}},yAxis:{type:'value',axisLabel:{color:'rgba(255,255,255,.5)'}},series:[{type:'line',data:data.map(function(d){return d[vk];}),smooth:true,lineStyle:{color:'#a855f7',width:3},areaStyle:{color:safeLinearGradient(0,0,0,1,[{offset:0,color:'rgba(168,85,247,.3)'},{offset:1,color:'rgba(168,85,247,0)'}],'rgba(168,85,247,.3)')}}]});
+                c4.on('click',function(p){showDetail(data[p.dataIndex]);});
+            },100);
+        }
+
+        // === 交互：详情弹窗 ===
+        function showDetail(data){
+            var modal = document.getElementById('detailModal');
+            document.getElementById('detailTitle').textContent='详细数据';
+            var body = document.getElementById('detailBody');
+            if(typeof data==='object'&&data!==null){
+                var html='';
+                Object.keys(data).forEach(function(k){
+                    html+='<div class="field"><label>'+escapeHtml(k)+'</label><span>'+escapeHtml(String(data[k]))+'</span></div>';
+                });
+                body.innerHTML=html;
+            } else {
+                body.innerHTML='<div style="color:rgba(255,255,255,.5);">'+escapeHtml(String(data))+'</div>';
+            }
+            modal.classList.add('show');
+        }
+        function closeDetail(){document.getElementById('detailModal').classList.remove('show');}
+
+        // === 全屏 ===
+        var isFullscreen=false;
+        function toggleFullscreen(){
+            var container = document.getElementById('dashboardContainer');
+            isFullscreen=!isFullscreen;
+            if(isFullscreen){
+                container.classList.add('fullscreen');
+                document.getElementById('fsToggle').textContent='✕';
+            } else {
+                container.classList.remove('fullscreen');
+                document.getElementById('fsToggle').textContent='⛶';
+            }
+            setTimeout(function(){
+                chartInstances.forEach(function(c){try{c.resize();}catch(e){}});
+            },200);
+        }
+
+        // === 导出CSV ===
+        function exportCSV(){
+            if(!screenData){alert('数据未加载');return;}
+            window.open('/admin/datascreen/export?id='+dsId+'&format=csv','_blank');
+        }
+
+        // === 导出Excel ===
+        function exportExcel(){
+            if(!screenData){alert('数据未加载');return;}
+            try{
+                var rawData = screenData.raw_data || [];
+                if(!rawData.length){alert('没有可导出的数据');return;}
+                var ws = XLSX.utils.json_to_sheet(rawData);
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, '大屏数据');
+                // 添加图表配置到第二页
+                if(screenData.chart_config&&Object.keys(screenData.chart_config).length){
+                    var configArr = [];
+                    Object.keys(screenData.chart_config).forEach(function(k){
+                        var row={};
+                        row['key']=k;
+                        row['value']=typeof screenData.chart_config[k]==='object'?JSON.stringify(screenData.chart_config[k]):String(screenData.chart_config[k]);
+                        configArr.push(row);
+                    });
+                    var ws2 = XLSX.utils.json_to_sheet(configArr);
+                    XLSX.utils.book_append_sheet(wb, ws2, '图表配置');
+                }
+                XLSX.writeFile(wb, (screenData.name||'大屏数据')+'.xlsx');
+            } catch(e){
+                alert('导出失败: '+e.message);
+            }
+        }
+
+        // === 调用记录 ===
+        var logPage=1;
+        function loadCallLogs(){
+            fetch('/admin/datascreen/logs?datascreen_id='+dsId+'&page='+logPage+'&page_size=10').then(function(r){return r.json();}).then(function(data){
+                var html = '<details><summary>📋 访问记录（共'+(data.total||0)+'条）</summary>';
+                if(data.items&&data.items.length){
+                    html += '<table class="call-log-table"><thead><tr><th>时间</th><th>操作</th><th>状态</th></tr></thead><tbody>';
+                    data.items.forEach(function(log){
+                        html += '<tr><td>'+(log.created_at||'')+'</td><td>'+(log.action||'')+'</td><td>'+(log.status||'')+'</td></tr>';
+                    });
+                    html += '</tbody></table>';
+                } else {
+                    html += '<div style="color:rgba(255,255,255,.3);padding:12px;">暂无记录</div>';
+                }
+                html += '</details>';
+                document.getElementById('callLogArea').innerHTML = html;
+            });
+        }
+
+        // 窗口resize
+        window.addEventListener('resize',function(){
+            chartInstances.forEach(function(c){try{c.resize();}catch(e){}});
+        });
+
+        loadScreen();
+    </script>
+</body>
+</html>
