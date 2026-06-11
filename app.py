@@ -210,6 +210,7 @@ def seed_data():
         (4, "权限管理", "perm_mgr", "layui-icon-password", 0, "/admin/permission", 4, 1),
         (6, "模型引擎", "ai_model_mgr", "layui-icon-app", 0, "/admin/ai_model", 5, 1),
         (7, "瞭望管理", "lookout_mgr", "layui-icon-search", 0, "/admin/lookout/source", 6, 1),
+        (21, "AI深度采集", "lookout_deep", "layui-icon-flag", 7, "/admin/lookout/deep", 1, 1),
         (12, "技能管理", "skill_mgr", "layui-icon-component", 0, "/admin/skill", 8, 1),
         (13, "数字员工", "employee_mgr", "layui-icon-username", 0, "/admin/employee", 9, 1),
         (14, "会话管理", "conversation_mgr", "layui-icon-dialogue", 0, "/admin/conversation", 10, 1),

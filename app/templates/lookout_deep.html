@@ -48,17 +48,51 @@
         .empty-tip { text-align: center; padding: 60px 20px; color: #999; }
         .empty-tip i { font-size: 48px; display: block; margin-bottom: 15px; }
         .empty-tip p { font-size: 15px; }
+        /* ===== 顶部导航 ===== */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0 16px;
+            border-bottom: 1px solid rgba(88, 28, 255, .15);
+        }
+        .top-nav .logo {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #581cff, #00d2ff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .top-nav .logo span { font-weight: 400; opacity: .5; }
+        .top-nav .nav-links { display: flex; gap: 16px; align-items: center; }
+        .top-nav .nav-links a {
+            color: #64748b; text-decoration: none; font-size: 13px; font-weight: 500;
+            padding: 6px 14px; border-radius: 6px; transition: all .3s;
+        }
+        .top-nav .nav-links a:hover,
+        .top-nav .nav-links a.active {
+            color: #00d2ff; background: rgba(0, 210, 255, .08);
+        }
     </style>
 </head>
 <body>
     <div class="deep-container">
-        <div class="deep-header">
-            <h2><i class="layui-icon layui-icon-search"></i> AI深度采集</h2>
-            <div>
-                <button class="layui-btn layui-btn-normal" onclick="syncFromWarehouse()">
-                    <i class="layui-icon layui-icon-refresh"></i> 从数据仓库同步
-                </button>
+        <!-- 顶部导航 -->
+        <div class="top-nav">
+            <div class="logo">🔭 瞭望 <span>· AI深度分析</span></div>
+            <div class="nav-links">
+                <a href="/admin/lookout/source">采集源管理</a>
+                <a href="/admin/lookout/collect">瞭望采集</a>
+                <a href="javascript:;" class="active">AI深度分析</a>
+                <a href="/admin/lookout/warehouse">数据仓库</a>
             </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;margin-top:20px;">
+            <h2 style="margin:0;font-size:20px;color:#333;"><i class="layui-icon layui-icon-search"></i> AI深度采集</h2>
+            <button class="layui-btn layui-btn-normal" onclick="syncFromWarehouse()">
+                <i class="layui-icon layui-icon-refresh"></i> 从数据仓库同步
+            </button>
         </div>
 
         <div class="stats-card" id="statsCard">

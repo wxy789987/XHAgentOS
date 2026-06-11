@@ -71,8 +71,9 @@
 </div>
 
 <script src="{{ static_url('dist/echarts/echarts.min.js') }}"></script>
+<script id="analysis-data" type="application/json">{% raw analysis_json %}</script>
 <script>
-var analysisData = JSON.parse('{{! analysis_json }}');
+var analysisData = JSON.parse(document.getElementById('analysis-data').textContent);
 var hourlyData = analysisData.hourly_requests;
 var responseData = analysisData.response_time_dist;
 var endpointData = analysisData.top_endpoints;
